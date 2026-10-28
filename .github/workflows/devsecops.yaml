@@ -607,3 +607,78 @@ jobs:
         run: |
           echo "Deploy realizado com sucesso."
           echo "URL de producao: $PAGE_URL"
+          
+  # ==========================================
+  # RESUMO DA ESTEIRA - PIPELINE SUMMARY
+  # ==========================================
+
+  pipeline_summary:
+    name: "09 - Resumo da Esteira"
+    runs-on: ubuntu-latest
+
+    if: always()
+
+    needs:
+      - gitleaks
+      - semgrep
+      - build
+      - trivy_sca
+      - docker_ghcr
+      - trivy_container
+      - staging_zap
+      - preparar_producao
+      - deploy_producao
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Gerar resumo da esteira
+        shell: bash
+        env:
+          GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
+          SEMGREP_RESULT: ${{ needs.semgrep.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          TRIVY_SCA_RESULT: ${{ needs.trivy_sca.result }}
+          DOCKER_RESULT: ${{ needs.docker_ghcr.result }}
+          TRIVY_CONTAINER_RESULT: ${{ needs.trivy_container.result }}
+          ZAP_RESULT: ${{ needs.staging_zap.result }}
+          PREPARE_RESULT: ${{ needs.preparar_producao.result }}
+          DEPLOY_RESULT: ${{ needs.deploy_producao.result }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          {
+            echo "# Critical Bait - Resumo da Esteira"
+            echo
+            echo "**Commit:** ${GITHUB_SHA}"
+            echo
+            echo "**Branch:** ${GITHUB_REF_NAME}"
+            echo
+            echo "**Execucao:** ${GITHUB_RUN_NUMBER}"
+            echo
+            echo "| Etapa | Resultado |"
+            echo "|---|---|"
+            echo "| 01 - Gitleaks | ${GITLEAKS_RESULT} |"
+            echo "| 02 - Semgrep | ${SEMGREP_RESULT} |"
+            echo "| 03 - Build | ${BUILD_RESULT} |"
+            echo "| 04 - Trivy SCA | ${TRIVY_SCA_RESULT} |"
+            echo "| 05 - Docker e GHCR | ${DOCKER_RESULT} |"
+            echo "| 06 - Trivy Container | ${TRIVY_CONTAINER_RESULT} |"
+            echo "| 07 - Staging e ZAP | ${ZAP_RESULT} |"
+            echo "| 08A - Preparar producao | ${PREPARE_RESULT} |"
+            echo "| 08B - Deploy producao | ${DEPLOY_RESULT} |"
+          } | tee reports/resumo-da-esteira.md >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Resumo gerado com sucesso."
+
+      - name: Publicar resumo como artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: resumo-da-esteira
+          path: reports/resumo-da-esteira.md
+          if-no-files-found: error
+          retention-days: 30
