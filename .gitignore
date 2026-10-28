@@ -1,0 +1,9 @@
+.vscode/
+.DS_Store
+Thumbs.db
+reports/
+dist/
+.env
+.env.*
+!.env.example
+node_modules/

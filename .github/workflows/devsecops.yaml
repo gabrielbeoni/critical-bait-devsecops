@@ -1,0 +1,39 @@
+name: Pipeline DevSecOps - Critical Bait
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: "01 - Gitleaks (Secrets)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Gitleaks
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/scripts/install.sh | bash -s -- -b /usr/local/bin
+
+      - name: Analisar secrets
+        run: |
+          mkdir -p reports
+          gitleaks git --report-format json --report-path reports/gitleaks.json --exit-code 1 .
+
+      - name: Publicar relatorio
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-gitleaks
+          path: reports/gitleaks.json
+          if-no-files-found: warn
