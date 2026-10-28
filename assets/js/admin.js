@@ -13,15 +13,14 @@ CB.applyContentOverrides = function(){
   }
   /* reconstrói cada quiz: originais + extras do admin (sem duplicar) */
   const cq=CB.DB.data.contentQuiz||{};
-  Object.keys(cq).forEach(function(k){
-    if(cq[k]&&cq[k].length){
-      const base=CB._quizBase[k]||[];
-      const extras=cq[k];
-      /* adiciona só as perguntas que ainda não estão no array */
-      const existentes=base.map(function(q){return q.q;});
-      const novas=extras.filter(function(q){return existentes.indexOf(q.q)===-1;});
-      CB.QUIZZES[k]=base.concat(novas);
-    }
+  Object.keys(CB._quizBase).forEach(function(k){
+    const base=CB._quizBase[k];
+    const extras=Array.isArray(cq[k]) ? cq[k] : [];
+    const existentes=new Set(base.map(function(q){return q.q;}));
+    const novas=extras.filter(function(q){
+      return q && typeof q.q==="string" && !existentes.has(q.q);
+    });
+    CB.QUIZZES[k]=base.concat(novas);
   });
 };
 
@@ -226,7 +225,7 @@ CB._adminUsers=function(){
   const branchOpts=CB.BRANCHES.map(function(b){return'<option>'+CB.esc(b)+'</option>';}).join("");
   const rows=players.map(function(u){
     const isAdm=!!u.isAdmin;
-    return"<tr><td><div class='rank-player'><span class='rank-avatar'>"+(u.avatar||"🐟")+"</span><span class='rank-name'>"+CB.esc(u.name)+(u.seed?' <span class="chip-seed">demo</span>':"")+"</span></div></td>"+
+    return"<tr><td><div class='rank-player'><span class='rank-avatar'>"+CB.esc(String(u.avatar||"🐟"))+"</span><span class='rank-name'>"+CB.esc(u.name)+(u.seed?' <span class="chip-seed">demo</span>':"")+"</span></div></td>"+
     "<td>"+CB.esc(u.email)+"</td>"+
     "<td>"+CB.esc(u.role)+"</td>"+
     '<td><select class="adm-branch-sel" data-branch-email="'+CB.esc(u.email)+'">'+CB.BRANCHES.map(function(b){return'<option'+(b===u.branch?' selected':'')+'>'+CB.esc(b)+'</option>';}).join("")+"</select></td>"+
@@ -272,9 +271,9 @@ CB._adminMissions=function(){
 };
 
 CB._adminContent=function(){
-  const quizCounts=Object.keys(CB.QUIZZES).map(function(k){return"<li><b>"+k+"</b>: "+CB.QUIZZES[k].length+" perguntas</li>";}).join("");
+  const quizCounts=Object.keys(CB.QUIZZES).map(function(k){return"<li><b>"+CB.esc(k)+"</b>: "+CB.QUIZZES[k].length+" perguntas</li>";}).join("");
   const modList=CB.MODULES.map(function(m){return"<li>"+m.icon+" <b>"+CB.esc(m.title)+"</b> — "+m.missions.map(function(mi){return CB.esc(mi.title);}).join(", ")+"</li>";}).join("");
-  const quizOpts=Object.keys(CB.QUIZZES).map(function(k){return"<option>"+k+"</option>";}).join("");
+  const quizOpts=Object.keys(CB.QUIZZES).map(function(k){return"<option>"+CB.esc(k)+"</option>";}).join("");
 
   /* lista de perguntas criadas pelo admin (removíveis) */
   var cq=CB.DB.data.contentQuiz||{};
@@ -313,6 +312,8 @@ CB._adminContent=function(){
 /* Security tab removida */
 
 CB._bindAdminActions=function(){
+  // Barreira de interface apenas: permissões reais exigem validação no servidor.
+  if(!CB.Auth.isAdmin())return;
   /* exportar PDF */
   var expBtn=document.getElementById("export-pdf");
   if(expBtn)expBtn.onclick=function(){try{CB.exportAdminPDF();}catch(e){CB.toast("Erro","Não foi possível gerar o relatório.","⚠️");console.error(e);}};
@@ -362,8 +363,16 @@ CB._bindAdminActions=function(){
     const correct=+document.getElementById("nq-correct").value;
     const exp=document.getElementById("nq-exp").value.trim();
     const msg=document.getElementById("nq-msg");
-    const g={blocked:false};
-    if(g.blocked){msg.className="auth-msg err";msg.textContent="🚫 Bloqueado: possível "+g.type+" em '"+g.field+"'.";return;}
+    if(!CB.Auth.isAdmin()){
+      msg.className="auth-msg err";
+      msg.textContent="Acesso restrito.";
+      return;
+    }
+    if(!Object.prototype.hasOwnProperty.call(CB.QUIZZES,key) || !Array.isArray(CB.QUIZZES[key])){
+      msg.className="auth-msg err";
+      msg.textContent="Quiz inválido.";
+      return;
+    }
     if(!q||!opts[0]||!opts[1]||!opts[2]||!exp){msg.className="auth-msg err";msg.textContent="Preencha todos os campos.";return;}
     const question={q:q,options:opts,correct:correct,explain:exp};
     /* só adiciona — nunca substitui o que já existe */

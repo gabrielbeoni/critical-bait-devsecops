@@ -141,8 +141,15 @@ CB.go=function(view){
     document.getElementById("view").innerHTML=viewFn();
   }catch(e){
     console.error("View render error:", view, e);
-    document.getElementById("view").innerHTML='<div class="panel" style="padding:30px"><h3 style="color:var(--danger)">Erro ao carregar: '+view+'</h3><p>'+CB.esc(e.message)+'</p><p style="margin-top:12px"><button class="btn-primary" onclick="localStorage.clear();location.reload()">🔄 Resetar e recarregar</button></p></div>';
+    document.getElementById("view").innerHTML='<div class="panel" style="padding:30px"><h3 style="color:var(--danger)">Erro ao carregar: '+view+'</h3><p>'+CB.esc(e.message)+'</p><p style="margin-top:12px"><button class="btn-primary" id="cb-reset-reload">🔄 Resetar e recarregar</button></p></div>';
   }
+  var resetBtn=document.getElementById("cb-reset-reload");
+  if(resetBtn)resetBtn.addEventListener("click",function(){
+    if(confirm("Apagar os dados locais desta demonstração e recarregar?")){
+      localStorage.removeItem(CB.DB.KEY);
+      location.reload();
+    }
+  });
   try{CB.refreshChrome();}catch(e){console.error("refreshChrome error:",e);}
   if(CB._afterView){var f=CB._afterView;CB._afterView=null;try{f();}catch(e){console.error("_afterView error:",e);}}
   if(!CB._noScroll)window.scrollTo(0,0);CB._noScroll=false;
@@ -490,7 +497,7 @@ CB.viewPath=function(){
 
   /* filtro e busca */
   var filterHtml='<div class="path-toolbar">'+
-    '<div class="path-search-wrap"><span>🔍</span><input type="text" id="path-search" placeholder="Buscar missão..." value="'+(CB._pathSearch||'')+'"></div>'+
+    '<div class="path-search-wrap"><span>🔍</span><input type="text" id="path-search" placeholder="Buscar missão..." value="'+CB.esc(CB._pathSearch||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>'+
     '<div class="path-filters">'+
     '<button class="path-filter-btn'+(!CB._pathFilter||CB._pathFilter==="all"?" active":"")+'" data-pf="all">Todos</button>'+
     '<button class="path-filter-btn'+(CB._pathFilter==="Iniciante"?" active":"")+'" data-pf="Iniciante">🟢 Iniciante</button>'+
@@ -668,6 +675,7 @@ CB.showModuleCert=function(modId){
   var u=CB.user();
   var mod=CB.MODULES.find(function(m){return m.id===modId;});
   if(!mod)return;
+  if(!u || !CB.moduleCompleted(modId,u)){CB.toast("Atenção","Conclua o módulo antes de visualizar o selo.","");return;}
   var dt=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
   var h='<div class="cert-overlay" id="cert-overlay"><div class="cert-page cert-mini"><div class="cert-border">'+
     '<div class="cert-header"><div class="cert-logos">🛡️ <span class="cert-brand">CRITICAL <b>BAIT</b></span> | <span class="cert-lm">LEROY MERLIN</span></div>'+
