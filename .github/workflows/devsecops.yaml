@@ -481,7 +481,6 @@ jobs:
               -o /tmp/staging-index.html; then
 
               test -s /tmp/staging-index.html
-
               echo "Staging respondendo corretamente."
               exit 0
             fi
@@ -536,3 +535,75 @@ jobs:
         run: |
           docker rm -f critical-bait-staging || true
           docker network rm critical-bait-zap-net || true
+
+  # ==========================================
+  # ETAPA 8 - APROVACAO E DEPLOY EM PRODUCAO
+  # ==========================================
+  preparar_producao:
+    name: "08A - Preparar producao"
+    needs: staging_zap
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Preparar arquivos de producao
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          cp index.html dist/
+          cp -R assets dist/
+
+          for file in favicon.ico robots.txt manifest.json; do
+            if [ -f "$file" ]; then
+              cp "$file" dist/
+            fi
+          done
+
+          touch dist/.nojekyll
+          test -s dist/index.html
+
+          echo "Arquivos de producao preparados."
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publicar artefato para Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/
+
+  deploy_producao:
+    name: "08B - Aprovacao e Deploy em Producao"
+    needs: preparar_producao
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publicar site no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Exibir endereco de producao
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          echo "Deploy realizado com sucesso."
+          echo "URL de producao: $PAGE_URL"
