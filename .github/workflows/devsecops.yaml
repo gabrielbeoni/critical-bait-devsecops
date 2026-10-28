@@ -406,3 +406,133 @@ jobs:
           path: reports/trivy-container.json
           if-no-files-found: warn
           retention-days: 30
+
+  # ==========================================
+  # ETAPA 7 - STAGING E OWASP ZAP (DAST)
+  # ==========================================
+  staging_zap:
+    name: "07 - Staging e OWASP ZAP (DAST)"
+    needs: trivy_container
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Definir nome da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Autenticar no GHCR
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$GHCR_TOKEN" | \
+            docker login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin
+
+      - name: Preparar imagem de staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            docker build -t "$IMAGE:${GITHUB_SHA}" .
+          else
+            docker pull "$IMAGE:${GITHUB_SHA}"
+          fi
+
+      - name: Iniciar ambiente de staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker network create critical-bait-zap-net
+
+          docker run -d \
+            --name critical-bait-staging \
+            --network critical-bait-zap-net \
+            -p 127.0.0.1:8080:8080 \
+            "$IMAGE:${GITHUB_SHA}"
+
+          echo "Staging iniciado."
+
+      - name: Verificar disponibilidade do staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8080/ \
+              -o /tmp/staging-index.html; then
+
+              test -s /tmp/staging-index.html
+
+              echo "Staging respondendo corretamente."
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          docker logs critical-bait-staging
+          exit 1
+
+      - name: Preparar pasta de relatorios
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports/zap
+          chmod 777 reports/zap
+
+      - name: Executar OWASP ZAP Baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm \
+            --network critical-bait-zap-net \
+            -v "$PWD/reports/zap:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t http://critical-bait-staging:8080 \
+              -m 1 \
+              -r zap-report.html \
+              -J zap-report.json \
+              -I
+
+          test -s reports/zap/zap-report.html
+          test -s reports/zap/zap-report.json
+
+          echo "Relatorios OWASP ZAP gerados."
+
+      - name: Publicar relatorios OWASP ZAP
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-owasp-zap
+          path: reports/zap/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Encerrar ambiente de staging
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f critical-bait-staging || true
+          docker network rm critical-bait-zap-net || true
