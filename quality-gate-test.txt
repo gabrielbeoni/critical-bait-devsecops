@@ -1,0 +1,6 @@
+QUALITY GATE - TESTE CONTROLADO
+
+Este arquivo contém uma credencial FICTÍCIA,
+utilizada exclusivamente para testar o Gitleaks.
+
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
