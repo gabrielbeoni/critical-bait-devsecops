@@ -140,7 +140,7 @@ CB.go=function(view){
   try{
     document.getElementById("view").innerHTML=viewFn();
   }catch(e){
-    console.error("View render error ["+view+"]:",e);
+    console.error("View render error:", view, e);
     document.getElementById("view").innerHTML='<div class="panel" style="padding:30px"><h3 style="color:var(--danger)">Erro ao carregar: '+view+'</h3><p>'+CB.esc(e.message)+'</p><p style="margin-top:12px"><button class="btn-primary" onclick="localStorage.clear();location.reload()">🔄 Resetar e recarregar</button></p></div>';
   }
   try{CB.refreshChrome();}catch(e){console.error("refreshChrome error:",e);}
