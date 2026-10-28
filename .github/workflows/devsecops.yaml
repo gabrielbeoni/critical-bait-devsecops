@@ -267,7 +267,7 @@ jobs:
 
           docker run -d \
             --name critical-bait-test \
-            -p 127.0.0.1:8080:80 \
+            -p 127.0.0.1:8080:8080 \
             "$IMAGE:${GITHUB_SHA}"
 
           trap 'docker rm -f critical-bait-test' EXIT
