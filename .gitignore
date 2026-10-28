@@ -7,3 +7,12 @@ dist/
 .env.*
 !.env.example
 node_modules/
+
+# Relatorios de seguranca
+gitleaks-local.json
+reports/
+
+# Arquivos sensiveis
+.env
+.env.*
+!.env.example
