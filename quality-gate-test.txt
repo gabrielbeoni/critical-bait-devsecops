@@ -1,6 +1,5 @@
-QUALITY GATE - TESTE CONTROLADO
+﻿CRITICAL BAIT - TESTE CONTROLADO DO QUALITY GATE
 
-Este arquivo contém uma credencial FICTÍCIA,
-utilizada exclusivamente para testar o Gitleaks.
+Credencial ficticia utilizada exclusivamente para testar o Gitleaks.
 
 AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
