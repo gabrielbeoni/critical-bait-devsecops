@@ -1,6 +1,5 @@
 /* ============================================================
-   CRITICAL BAIT — Admin v3
-   Novidades: alternância membro/admin, estatísticas de missão
+   CRITICAL BAIT — Gestão de conteúdo e relatórios
    ============================================================ */
 window.CB = window.CB || {};
 CB._adminTab = "overview";
@@ -11,7 +10,7 @@ CB.applyContentOverrides = function(){
     CB._quizBase={};
     Object.keys(CB.QUIZZES).forEach(function(k){CB._quizBase[k]=CB.QUIZZES[k].slice();});
   }
-  /* reconstrói cada quiz: originais + extras do admin (sem duplicar) */
+  
   const cq=CB.DB.data.contentQuiz||{};
   Object.keys(CB._quizBase).forEach(function(k){
     const base=CB._quizBase[k];
@@ -275,7 +274,7 @@ CB._adminContent=function(){
   const modList=CB.MODULES.map(function(m){return"<li>"+m.icon+" <b>"+CB.esc(m.title)+"</b> — "+m.missions.map(function(mi){return CB.esc(mi.title);}).join(", ")+"</li>";}).join("");
   const quizOpts=Object.keys(CB.QUIZZES).map(function(k){return"<option>"+CB.esc(k)+"</option>";}).join("");
 
-  /* lista de perguntas criadas pelo admin (removíveis) */
+  
   var cq=CB.DB.data.contentQuiz||{};
   var customRows="";
   var customCount=0;
@@ -318,7 +317,7 @@ CB._bindAdminActions=function(){
   var expBtn=document.getElementById("export-pdf");
   if(expBtn)expBtn.onclick=function(){try{CB.exportAdminPDF();}catch(e){CB.toast("Erro","Não foi possível gerar o relatório.","⚠️");console.error(e);}};
 
-  /* trocar filial via select */
+  
   document.querySelectorAll("[data-branch-email]").forEach(function(sel){
     sel.onchange=function(){
       var email=sel.getAttribute("data-branch-email");
@@ -388,7 +387,7 @@ CB._bindAdminActions=function(){
     CB.toast("Pergunta adicionada","Quiz "+key+" · "+total+" perguntas","➕");
   };
 
-  /* ── remover pergunta criada pelo admin ── */
+  
   document.querySelectorAll("[data-delq]").forEach(function(btn){
     btn.onclick=function(){
       var quizKey=btn.getAttribute("data-delq");
@@ -397,7 +396,7 @@ CB._bindAdminActions=function(){
       if(!cq||!cq[quizKey]||!cq[quizKey][idx])return;
       var removedQ=cq[quizKey][idx].q;
       if(!confirm("Remover esta pergunta?\n\n\""+removedQ+"\""))return;
-      /* remove do DB */
+      
       cq[quizKey].splice(idx,1);
       if(cq[quizKey].length===0)delete cq[quizKey];
       CB.DB.save();

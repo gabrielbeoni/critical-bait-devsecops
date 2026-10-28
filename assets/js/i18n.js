@@ -176,7 +176,7 @@ CB.TRANSLATIONS = {
     }
   },
 
-  /* ── Admin ── */
+  
   admin: {
     en: {
       collaborators: "Collaborators", missions_done: "Missions completed", avg_level: "Average level",

@@ -1,7 +1,5 @@
 /* ============================================================
-   CRITICAL BAIT — App v3
-   Novidades: onboarding obrigatório, tela de módulos com info,
-   admin com alternância membro/admin, estatísticas de missão
+   CRITICAL BAIT — Interface e navegação
    ============================================================ */
 window.CB = window.CB || {};
 CB.AVATARS=["🐟","🐱","🤖","🦊","🦉","🐉","🥷","👾","🦅","🐺","🦾","⚡","🐯","🦝","🐙","🛡️","🦇","🐸","🦖","🐧","🦈","🐼","🦁","🐵","🦄","🐝","🐲","🎭","🧙","🦸","👻","🤠","🧛","🦂","🐨","🦜"];
@@ -533,7 +531,7 @@ CB.viewRanking=function(){
   var isAdmin=CB.Auth.isAdmin();
   const tab=CB._rankTab;
 
-  /* colaborador: só aba da filial dele. Admin: individual + todas as filiais */
+  
   let tabs;
   if(isAdmin){
     tabs='<div class="rank-tabs"><button class="rank-tab '+(tab==="ind"?"active":"")+'" data-rt="ind">👤 Individual</button>'+
@@ -545,7 +543,7 @@ CB.viewRanking=function(){
 
   let table;
   if(tab==="branch"&&isAdmin){
-    /* ADMIN: ranking de TODAS as filiais */
+    
     const lb=CB.branchLeaderboard(),myb=u.branch;
     const rows=lb.map(function(b){const medal=b.pos===1?"🥇":b.pos===2?"🥈":b.pos===3?"🥉":b.pos;
       return'<tr class="rank-row'+(b.branch===myb?" you":"")+'"><td class="rank-pos">'+medal+"</td>"+
@@ -553,7 +551,7 @@ CB.viewRanking=function(){
       '<td class="rank-xp">'+b.xp.toLocaleString("pt-BR")+" XP</td><td>"+b.members+"</td><td>Lv "+b.avgLevel+"</td></tr>";}).join("");
     table='<div class="panel"><table class="rank-table"><thead><tr><th>#</th><th>Filial</th><th>XP Total</th><th>Membros</th><th>Nível médio</th></tr></thead><tbody>'+rows+"</tbody></table></div>";
   }else if(tab==="matriz"&&isAdmin){
-    /* ADMIN: ranking da Matriz */
+    
     const lb=CB.leaderboard().filter(function(p){return p.branch==="Matriz - SP";});
     lb.forEach(function(p,i){p.pos=i+1;});
     function medal3(pos){return pos===1?"🥇":pos===2?"🥈":pos===3?"🥉":pos;}
@@ -564,7 +562,7 @@ CB.viewRanking=function(){
     table='<div class="panel"><h3 style="margin-bottom:12px">🏢 Ranking da Matriz</h3>'+
       '<table class="rank-table"><thead><tr><th>#</th><th>Jogador</th><th>XP Total</th><th>Nível</th></tr></thead><tbody>'+(bodyM||'<tr><td colspan="4" style="text-align:center;color:var(--text-mute)">Nenhum colaborador na Matriz ainda.</td></tr>')+"</tbody></table></div>";
   }else if(tab==="ind"&&isAdmin){
-    /* ADMIN: ranking individual de TODOS */
+    
     const lb=CB.leaderboard(),top=lb.slice(0,10),inTop=top.some(function(p){return p.you;}),me=lb.find(function(p){return p.you;});
     function medal(pos){return pos===1?"🥇":pos===2?"🥈":pos===3?"🥉":pos;}
     function row(p){return'<tr class="rank-row'+(p.you?" you":"")+'"><td class="rank-pos">'+medal(p.pos)+"</td>"+

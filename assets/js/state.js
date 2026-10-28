@@ -232,7 +232,7 @@ CB.visit = function (view) {
   CB.save();
 };
 
-/* ---------- Pontos fracos (admin) ---------- */
+
 CB.weakPoints = function () {
   const agg = {};
   CB.DB.allUsers().forEach((u) => {
