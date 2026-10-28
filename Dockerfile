@@ -1,4 +1,3 @@
-
 FROM nginxinc/nginx-unprivileged:stable-alpine
 
 USER root
@@ -8,6 +7,8 @@ RUN apk update && \
 
 COPY index.html /usr/share/nginx/html/
 COPY assets/ /usr/share/nginx/html/assets/
+
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 USER nginx
 
