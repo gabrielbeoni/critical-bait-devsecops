@@ -1,5 +1,0 @@
-﻿CRITICAL BAIT - TESTE CONTROLADO
-
-Marcador ficticio sem qualquer valor de autenticacao:
-
-CRITICAL_BAIT_TEST_SECRET_ABC123DEF456
