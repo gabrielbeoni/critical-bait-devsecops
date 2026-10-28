@@ -864,18 +864,20 @@ CB.exitAdminDemo = function () {
 CB.addAdminDemoButton = function () {
   var form = document.getElementById("login-form");
   if (!form || document.getElementById("admin-demo-btn")) return;
+
   var btn = document.createElement("button");
   btn.id = "admin-demo-btn";
   btn.type = "button";
   btn.className = "btn-soft";
   btn.textContent = "🛡️ Acessar demonstração administrativa";
-  btn.style.cssText = "width:100%;margin-top:14px;padding:12px;cursor:pointer";
+  btn.style.cssText = "display:block;width:100%;margin-top:14px;padding:12px;cursor:pointer;border:1px solid #2bee6b";
   btn.onclick = CB.enterAdminDemo;
-  form.insertAdjacentElement("afterend", btn);
+  form.appendChild(btn);
+
   var note = document.createElement("p");
   note.textContent = "Acesso público demonstrativo. Não representa autenticação ou autorização segura.";
   note.style.cssText = "font-size:12px;opacity:.75;margin-top:8px;text-align:center";
-  btn.insertAdjacentElement("afterend", note);
+  form.appendChild(note);
 };
 
 CB.showApp=function(){
@@ -901,6 +903,7 @@ CB.showLogin=function(){
   var ld=document.getElementById("landing");if(ld)ld.style.display="none";
   document.getElementById("app").classList.add("hidden");
   document.getElementById("login-screen").classList.remove("hidden");
+  CB.addAdminDemoButton();
 };
 
 CB.showLanding=function(){
