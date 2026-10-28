@@ -135,8 +135,7 @@ jobs:
           cp index.html dist/
           cp -R assets dist/
 
-          # Copiar outros arquivos estaticos da raiz,
-          # caso existam.
+          # Copiar arquivos estaticos opcionais
           for file in favicon.ico robots.txt manifest.json; do
             if [ -f "$file" ]; then
               cp "$file" dist/
@@ -166,3 +165,54 @@ jobs:
           path: critical-bait-build.zip
           if-no-files-found: error
           retention-days: 30
+
+  # ==========================================
+  # ETAPA 4 - TRIVY (SCA)
+  # ==========================================
+  trivy_sca:
+    name: "04 - Trivy (SCA)"
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Instalar Trivy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TRIVY_VERSION="0.69.3"
+
+          curl -fSL --retry 3 \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+            -o /tmp/trivy.tar.gz
+
+          sudo tar -xzf /tmp/trivy.tar.gz \
+            -C /usr/local/bin trivy
+
+          trivy --version
+
+      - name: Analisar dependencias e vulnerabilidades
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          trivy fs \
+            --scanners vuln,misconfig \
+            --severity HIGH,CRITICAL \
+            --format json \
+            --output reports/trivy-sca.json \
+            --exit-code 1 \
+            .
+
+      - name: Publicar relatorio Trivy
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-trivy-sca
+          path: reports/trivy-sca.json
+          if-no-files-found: warn
