@@ -311,3 +311,98 @@ jobs:
 
           echo "Imagem publicada: $IMAGE:latest"
           echo "Versao do commit: $IMAGE:${GITHUB_SHA}"
+
+  # ==========================================
+  # ETAPA 6 - TRIVY CONTAINER SCAN
+  # ==========================================
+  trivy_container:
+    name: "06 - Trivy Container Scan"
+    needs: docker_ghcr
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Definir nome da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Instalar Trivy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TRIVY_VERSION="0.69.3"
+
+          curl -fSL --retry 3 \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+            -o /tmp/trivy.tar.gz
+
+          sudo tar -xzf /tmp/trivy.tar.gz \
+            -C /usr/local/bin trivy
+
+          trivy --version
+
+      - name: Autenticar no GHCR
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$GHCR_TOKEN" | \
+            docker login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin
+
+      - name: Construir imagem para pull requests
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker build \
+            --tag "$IMAGE:${GITHUB_SHA}" \
+            .
+
+      - name: Baixar imagem publicada
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker pull "$IMAGE:${GITHUB_SHA}"
+
+      - name: Analisar vulnerabilidades da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          trivy image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --format json \
+            --output reports/trivy-container.json \
+            --exit-code 1 \
+            "$IMAGE:${GITHUB_SHA}"
+
+      - name: Publicar relatorio Trivy Container
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-trivy-container
+          path: reports/trivy-container.json
+          if-no-files-found: warn
+          retention-days: 30
