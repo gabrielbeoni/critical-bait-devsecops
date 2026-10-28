@@ -1,0 +1,14 @@
+
+.git
+.github
+.gitignore
+.env
+.env.*
+!.env.example
+reports/
+docs/
+dist/
+*.zip
+gitleaks-local.json
+README.md
+node_modules/
