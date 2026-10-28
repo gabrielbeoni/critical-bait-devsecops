@@ -795,7 +795,7 @@ CB.viewProfile=function(){
 
     CB._bindPwToggles(document.getElementById("view"));
     var pLogout=document.getElementById("profile-logout");
-    if(pLogout)pLogout.onclick=function(){CB.Auth.logout();CB.showLogin();};
+    if(pLogout)pLogout.onclick=CB.exitAdminDemo;
   };
 
   return'<div class="profile-head"><div class="profile-avatar" id="avatar-click" title="Clique para trocar o avatar" style="cursor:pointer;position:relative">'+(u.avatar||"🐟")+'<span class="av-edit-hint">✏️</span></div>'+
@@ -829,14 +829,75 @@ CB.viewProfile=function(){
 /* ─── AUTENTICAÇÃO ─── */
 CB.populateSelects=function(){const fill=function(id,list){const el=document.getElementById(id);if(el)el.innerHTML=list.map(function(o){return"<option>"+CB.esc(o)+"</option>";}).join("");};fill("reg-dept",CB.DEPARTMENTS);fill("reg-role",CB.ROLES);fill("reg-branch",CB.BRANCHES);};
 CB.authMsg=function(text,ok){const m=document.getElementById("auth-msg");m.className="auth-msg "+(ok?"ok":"err");m.textContent=text||"";};
+/* Modo demonstrativo: acesso público, sem autenticação ou privilégios reais. */
+CB.DEMO_ADMIN_EMAIL = "demo-admin@criticalbait.invalid";
+
+CB.enterAdminDemo = function () {
+  var email = CB.DEMO_ADMIN_EMAIL;
+  var user = CB.DB.newUser({
+    email: email,
+    name: "Administrador (Demonstração)",
+    dept: "Treinamento",
+    role: "Avaliador",
+    branch: "Matriz - SP",
+    avatar: "🛡️",
+    isAdmin: true
+  });
+  user.demoMode = true;
+  user.onboardingDone = true;
+  CB.DB.data.users[email] = user;
+  CB.DB.data.currentEmail = email;
+  CB.DB.save();
+  CB.showApp();
+  CB.go("admin");
+  CB.toast("Modo demonstração", "Painel demonstrativo — sem autenticação real.", "");
+};
+
+CB.exitAdminDemo = function () {
+  if (CB.DB.data.currentEmail === CB.DEMO_ADMIN_EMAIL) {
+    delete CB.DB.data.users[CB.DEMO_ADMIN_EMAIL];
+  }
+  CB.Auth.logout();
+  CB.showLogin();
+};
+
+CB.addAdminDemoButton = function () {
+  var form = document.getElementById("login-form");
+  if (!form || document.getElementById("admin-demo-btn")) return;
+  var btn = document.createElement("button");
+  btn.id = "admin-demo-btn";
+  btn.type = "button";
+  btn.className = "btn-soft";
+  btn.textContent = "🛡️ Acessar demonstração administrativa";
+  btn.style.cssText = "width:100%;margin-top:14px;padding:12px;cursor:pointer";
+  btn.onclick = CB.enterAdminDemo;
+  form.insertAdjacentElement("afterend", btn);
+  var note = document.createElement("p");
+  note.textContent = "Acesso público demonstrativo. Não representa autenticação ou autorização segura.";
+  note.style.cssText = "font-size:12px;opacity:.75;margin-top:8px;text-align:center";
+  btn.insertAdjacentElement("afterend", note);
+};
+
 CB.showApp=function(){
   var ld=document.getElementById("landing");if(ld)ld.style.display="none";
   document.getElementById("login-screen").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   try{CB.refreshChrome();}catch(e){console.error(e);}
   CB.go("dashboard");
+  var old = document.getElementById("cb-demo-banner");
+  if (old) old.remove();
+  if (CB.Auth.current() && CB.Auth.current().demoMode) {
+    var banner = document.createElement("div");
+    banner.id = "cb-demo-banner";
+    banner.setAttribute("role", "status");
+    banner.textContent = "🛡️ MODO DEMONSTRAÇÃO ADMINISTRATIVA — acesso público, dados locais, sem autenticação real.";
+    banner.style.cssText = "position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#123524;color:#fff;text-align:center;padding:10px;font-size:13px";
+    document.body.appendChild(banner);
+  }
 };
 CB.showLogin=function(){
+  var banner = document.getElementById("cb-demo-banner");
+  if (banner) banner.remove();
   var ld=document.getElementById("landing");if(ld)ld.style.display="none";
   document.getElementById("app").classList.add("hidden");
   document.getElementById("login-screen").classList.remove("hidden");
@@ -1125,8 +1186,9 @@ CB.init=function(){
   CB.Sound.init();CB.Theme.init();CB._initLang();
   CB.renderBrands();CB.populateSelects();
   CB.DB.seed();CB.applyContentOverrides();
+  CB.addAdminDemoButton();
   document.querySelectorAll(".nav-item").forEach(function(b){b.onclick=function(){CB.go(b.getAttribute("data-view"));};});
-  document.getElementById("logout-btn").onclick=function(){CB.Auth.logout();CB.showLogin();};
+  document.getElementById("logout-btn").onclick=CB.exitAdminDemo;
 
   document.addEventListener("click",function(e){
     const lvl=e.target.closest(".level-badge");
@@ -1177,6 +1239,10 @@ CB.init=function(){
   document.getElementById("register-form").onsubmit=async function(e){e.preventDefault();CB.authMsg("");const r=await CB.Auth.register({name:document.getElementById("reg-name").value,email:document.getElementById("reg-email").value,password:document.getElementById("reg-pass").value,dept:document.getElementById("reg-dept").value,role:document.getElementById("reg-role").value,branch:document.getElementById("reg-branch").value});if(r.ok){CB.showApp();CB.toast("Conta criada","Bem-vindo, "+r.user.name,"");}else CB.authMsg(r.error,false);};
 
   /* começa na landing page — login só quando clicar "acessar" */
+  if (CB.DB.data.users[CB.DEMO_ADMIN_EMAIL]) {
+    delete CB.DB.data.users[CB.DEMO_ADMIN_EMAIL];
+    CB.DB.save();
+  }
   CB.Auth.logout();
   var landing=document.getElementById("landing");
   if(landing){
