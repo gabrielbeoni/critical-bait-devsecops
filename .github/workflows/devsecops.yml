@@ -483,6 +483,8 @@ jobs:
     name: "07 - Staging e OWASP ZAP (DAST)"
     needs: trivy_container
     runs-on: ubuntu-latest
+    environment:
+      name: homologacao
 
     permissions:
       contents: read
