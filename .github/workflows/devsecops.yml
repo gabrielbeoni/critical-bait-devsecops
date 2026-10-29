@@ -17,7 +17,7 @@ jobs:
   # ==========================================
   gitleaks:
     name: "01 - Gitleaks (Secrets)"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout do codigo
