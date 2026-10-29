@@ -157,19 +157,42 @@ jobs:
           set -euo pipefail
 
           cd dist
-          zip -r ../critical-bait-build.zip .
+          zip -r "../critical-bait-build-${GITHUB_SHA}.zip" .
           cd ..
 
-          test -s critical-bait-build.zip
+          test -s "critical-bait-build-${GITHUB_SHA}.zip"
 
           echo "Pacote ZIP criado com sucesso."
+
+      - name: Registrar verificacoes do build
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p reports
+          {
+            echo "# Build - Critical Bait"
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Aplicacao: HTML, CSS e JavaScript estaticos"
+            echo "Dependencias npm: nao aplicavel (sem package.json neste build)"
+            echo "Validacao: arquivos essenciais e pacote ZIP"
+            echo "Testes automatizados: nao configurados neste workflow"
+          } > reports/build.md
+          find dist -type f | sort > reports/arvore-dependencias.txt 2>/dev/null || true
+
+      - name: Publicar relatorio do build
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-03-build
+          path: reports/
+          if-no-files-found: warn
 
       - name: Publicar artefato do build
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: critical-bait-build
-          path: critical-bait-build.zip
+          name: artefato-aplicacao
+          path: critical-bait-build-${{ github.sha }}.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -320,6 +343,33 @@ jobs:
 
           echo "Imagem publicada: $IMAGE:${GITHUB_SHA}"
           echo "Versao do commit: $IMAGE:${GITHUB_SHA}"
+
+      - name: Registrar manifesto da imagem Docker
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p reports
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          {
+            echo "# Build e publicacao Docker"
+            echo "Imagem: ${IMAGE}:${GITHUB_SHA}"
+            echo "Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "Evento: ${GITHUB_EVENT_NAME}"
+            echo "Data UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            if docker image inspect "${IMAGE}:${GITHUB_SHA}" >/dev/null 2>&1; then
+              echo "Digest local: $(docker image inspect --format '{{join .RepoDigests ", "}}' "${IMAGE}:${GITHUB_SHA}")"
+            else
+              echo "Digest: imagem indisponivel no runner"
+            fi
+          } > reports/docker-build.md
+
+      - name: Publicar relatorio Docker
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-05-docker-build
+          path: reports/docker-build.md
+          if-no-files-found: warn
 
   # ==========================================
   # ETAPA 6 - TRIVY CONTAINER SCAN
@@ -628,6 +678,32 @@ jobs:
           echo "Deploy realizado com sucesso."
           echo "URL de producao: $PAGE_URL"
           
+      - name: Registrar deploy em producao
+        if: always()
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          mkdir -p reports
+          {
+            echo "# Deploy em producao - Critical Bait"
+            echo "Data UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Imagem publicada no GHCR: ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+            echo "Destino efetivo: GitHub Pages (arquivos estaticos; nao utiliza a imagem Docker)"
+            echo "URL: ${PAGE_URL:-indisponivel}"
+            echo "Execucao: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "Aprovador humano: verificar historico de aprovacoes do environment no GitHub"
+          } > reports/deploy-producao.md
+
+      - name: Publicar relatorio de producao
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-08-producao
+          path: reports/deploy-producao.md
+          if-no-files-found: warn
+
   # ==========================================
   # RESUMO DA ESTEIRA - PIPELINE SUMMARY
   # ==========================================
