@@ -1,0 +1,704 @@
+name: Pipeline DevSecOps - Critical Bait
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  # ==========================================
+  # ETAPA 1 - GITLEAKS (SECRETS)
+  # ==========================================
+  gitleaks:
+    name: "01 - Gitleaks (Secrets)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fSL --retry 3 \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            -o /tmp/gitleaks.tar.gz
+
+          sudo tar -xzf /tmp/gitleaks.tar.gz \
+            -C /usr/local/bin gitleaks
+
+          gitleaks version
+
+      - name: Analisar secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          gitleaks git \
+            --report-format json \
+            --report-path reports/gitleaks.json \
+            --redact \
+            --exit-code 1 \
+            .
+
+      - name: Publicar relatorio Gitleaks
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-01-gitleaks
+          path: reports/gitleaks.json
+          if-no-files-found: warn
+
+  # ==========================================
+  # ETAPA 2 - SEMGREP (SAST)
+  # ==========================================
+  semgrep:
+    name: "02 - Semgrep (SAST)"
+    needs: gitleaks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Configurar Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Semgrep
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python -m pip install semgrep
+          semgrep --version
+
+      - name: Analisar codigo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          semgrep scan \
+            --config p/default \
+            --config p/owasp-top-ten \
+            --json \
+            --output reports/semgrep.json \
+            --error \
+            .
+
+      - name: Publicar relatorio Semgrep
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-02-semgrep
+          path: reports/semgrep.json
+          if-no-files-found: warn
+
+  # ==========================================
+  # ETAPA 3 - BUILD E EMPACOTAMENTO
+  # ==========================================
+  build:
+    name: "03 - Build e Empacotamento"
+    needs: semgrep
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validar arquivos essenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f index.html
+          test -d assets/css
+          test -d assets/js
+
+          echo "Arquivos essenciais encontrados."
+
+      - name: Preparar build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          cp index.html dist/
+          cp -R assets dist/
+
+          for file in favicon.ico robots.txt manifest.json; do
+            if [ -f "$file" ]; then
+              cp "$file" dist/
+            fi
+          done
+
+          echo "Build preparado com sucesso."
+          find dist -type f | sort
+
+      - name: Gerar pacote ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd dist
+          zip -r ../critical-bait-build.zip .
+          cd ..
+
+          test -s critical-bait-build.zip
+
+          echo "Pacote ZIP criado com sucesso."
+
+      - name: Publicar artefato do build
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: critical-bait-build
+          path: critical-bait-build.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  # ==========================================
+  # ETAPA 4 - TRIVY (SCA)
+  # ==========================================
+  trivy_sca:
+    name: "04 - Trivy (SCA)"
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Instalar Trivy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TRIVY_VERSION="0.69.3"
+
+          curl -fSL --retry 3 \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+            -o /tmp/trivy.tar.gz
+
+          sudo tar -xzf /tmp/trivy.tar.gz \
+            -C /usr/local/bin trivy
+
+          trivy --version
+
+      - name: Analisar dependencias e vulnerabilidades
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          trivy fs \
+            --scanners vuln,misconfig,secret \
+            --format table \
+            --output reports/trivy-fs.txt \
+            --exit-code 0 \
+            .
+
+          trivy fs \
+            --scanners vuln,misconfig,secret \
+            --severity HIGH,CRITICAL \
+            --format json \
+            --output reports/trivy-fs.json \
+            --exit-code 1 \
+            .
+
+      - name: Publicar relatorio Trivy
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-04-trivy-sca
+          path: |
+            reports/trivy-fs.txt
+            reports/trivy-fs.json
+          if-no-files-found: warn
+
+  # ==========================================
+  # ETAPA 5 - DOCKER E GHCR
+  # ==========================================
+  docker_ghcr:
+    name: "05 - Docker e GHCR"
+    needs: trivy_sca
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Definir nome da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+          echo "Imagem: $IMAGE"
+
+      - name: Construir imagem Docker
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker build \
+            --tag "$IMAGE:${GITHUB_SHA}" \
+            .
+
+          docker image inspect "$IMAGE:${GITHUB_SHA}"
+
+      - name: Testar servidor Nginx
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run -d \
+            --name critical-bait-test \
+            -p 127.0.0.1:8080:8080 \
+            "$IMAGE:${GITHUB_SHA}"
+
+          trap 'docker rm -f critical-bait-test' EXIT
+
+          for attempt in $(seq 1 15); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8080/ \
+              -o /tmp/critical-bait-index.html; then
+
+              echo "Aplicacao respondendo na porta 8080."
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          docker logs critical-bait-test
+          exit 1
+
+      - name: Autenticar no GHCR
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$GHCR_TOKEN" | \
+            docker login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin
+
+      - name: Publicar imagem no GHCR
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker push "$IMAGE:${GITHUB_SHA}"
+
+          echo "Imagem publicada: $IMAGE:${GITHUB_SHA}"
+          echo "Versao do commit: $IMAGE:${GITHUB_SHA}"
+
+  # ==========================================
+  # ETAPA 6 - TRIVY CONTAINER SCAN
+  # ==========================================
+  trivy_container:
+    name: "06 - Trivy Container Scan"
+    needs: docker_ghcr
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Definir nome da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Instalar Trivy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TRIVY_VERSION="0.69.3"
+
+          curl -fSL --retry 3 \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+            -o /tmp/trivy.tar.gz
+
+          sudo tar -xzf /tmp/trivy.tar.gz \
+            -C /usr/local/bin trivy
+
+          trivy --version
+
+      - name: Autenticar no GHCR
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$GHCR_TOKEN" | \
+            docker login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin
+
+      - name: Construir imagem para pull requests
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker build \
+            --tag "$IMAGE:${GITHUB_SHA}" \
+            .
+
+      - name: Baixar imagem publicada
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker pull "$IMAGE:${GITHUB_SHA}"
+
+      - name: Analisar vulnerabilidades da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          trivy image \
+            --scanners vuln \
+            --format table \
+            --output reports/trivy-image.txt \
+            --exit-code 0 \
+            "$IMAGE:${GITHUB_SHA}"
+
+          trivy image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --format json \
+            --output reports/trivy-image.json \
+            --exit-code 1 \
+            "$IMAGE:${GITHUB_SHA}"
+
+      - name: Publicar relatorio Trivy Container
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-06-trivy-image
+          path: |
+            reports/trivy-image.txt
+            reports/trivy-image.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ==========================================
+  # ETAPA 7 - STAGING E OWASP ZAP (DAST)
+  # ==========================================
+  staging_zap:
+    name: "07 - Staging e OWASP ZAP (DAST)"
+    needs: trivy_container
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Definir nome da imagem
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Autenticar no GHCR
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$GHCR_TOKEN" | \
+            docker login ghcr.io \
+              --username "$GITHUB_ACTOR" \
+              --password-stdin
+
+      - name: Preparar imagem de staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            docker build -t "$IMAGE:${GITHUB_SHA}" .
+          else
+            docker pull "$IMAGE:${GITHUB_SHA}"
+          fi
+
+      - name: Iniciar ambiente de staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker network create critical-bait-zap-net
+
+          docker run -d \
+            --name critical-bait-staging \
+            --network critical-bait-zap-net \
+            -p 127.0.0.1:8080:8080 \
+            "$IMAGE:${GITHUB_SHA}"
+
+          echo "Staging iniciado."
+
+      - name: Verificar disponibilidade do staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8080/ \
+              -o /tmp/staging-index.html; then
+
+              test -s /tmp/staging-index.html
+              echo "Staging respondendo corretamente."
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          docker logs critical-bait-staging
+          exit 1
+
+      - name: Preparar pasta de relatorios
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports/zap
+          chmod 777 reports/zap
+
+      - name: Executar OWASP ZAP Baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm \
+            --network critical-bait-zap-net \
+            -v "$PWD/reports/zap:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t http://critical-bait-staging:8080 \
+              -m 1 \
+              -r report_html.html \
+              -J report_json.json \
+              -w report_md.md \
+              -I
+
+          test -s reports/zap/report_html.html
+          test -s reports/zap/report_json.json
+
+          echo "Relatorios OWASP ZAP gerados."
+
+      - name: Publicar relatorios OWASP ZAP
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: relatorio-07-homologacao-zap
+          path: reports/zap/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Encerrar ambiente de staging
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f critical-bait-staging || true
+          docker network rm critical-bait-zap-net || true
+
+  # ==========================================
+  # ETAPA 8 - APROVACAO E DEPLOY EM PRODUCAO
+  # ==========================================
+  preparar_producao:
+    name: "08A - Preparar producao"
+    needs: staging_zap
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Preparar arquivos de producao
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          cp index.html dist/
+          cp -R assets dist/
+
+          for file in favicon.ico robots.txt manifest.json; do
+            if [ -f "$file" ]; then
+              cp "$file" dist/
+            fi
+          done
+
+          touch dist/.nojekyll
+          test -s dist/index.html
+
+          echo "Arquivos de producao preparados."
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+
+      - name: Publicar artefato para Pages
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: dist/
+
+  deploy_producao:
+    name: "08B - Aprovacao e Deploy em Producao"
+    needs: preparar_producao
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publicar site no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+      - name: Exibir endereco de producao
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          echo "Deploy realizado com sucesso."
+          echo "URL de producao: $PAGE_URL"
+          
+  # ==========================================
+  # RESUMO DA ESTEIRA - PIPELINE SUMMARY
+  # ==========================================
+
+  pipeline_summary:
+    name: "09 - Resumo da Esteira"
+    runs-on: ubuntu-latest
+
+    if: always()
+
+    needs:
+      - gitleaks
+      - semgrep
+      - build
+      - trivy_sca
+      - docker_ghcr
+      - trivy_container
+      - staging_zap
+      - preparar_producao
+      - deploy_producao
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Gerar resumo da esteira
+        shell: bash
+        env:
+          GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
+          SEMGREP_RESULT: ${{ needs.semgrep.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          TRIVY_SCA_RESULT: ${{ needs.trivy_sca.result }}
+          DOCKER_RESULT: ${{ needs.docker_ghcr.result }}
+          TRIVY_CONTAINER_RESULT: ${{ needs.trivy_container.result }}
+          ZAP_RESULT: ${{ needs.staging_zap.result }}
+          PREPARE_RESULT: ${{ needs.preparar_producao.result }}
+          DEPLOY_RESULT: ${{ needs.deploy_producao.result }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p reports
+
+          {
+            echo "# Critical Bait - Resumo da Esteira"
+            echo
+            echo "**Commit:** ${GITHUB_SHA}"
+            echo
+            echo "**Branch:** ${GITHUB_REF_NAME}"
+            echo
+            echo "**Execucao:** ${GITHUB_RUN_NUMBER}"
+            echo
+            echo "| Etapa | Resultado |"
+            echo "|---|---|"
+            echo "| 01 - Gitleaks | ${GITLEAKS_RESULT} |"
+            echo "| 02 - Semgrep | ${SEMGREP_RESULT} |"
+            echo "| 03 - Build | ${BUILD_RESULT} |"
+            echo "| 04 - Trivy SCA | ${TRIVY_SCA_RESULT} |"
+            echo "| 05 - Docker e GHCR | ${DOCKER_RESULT} |"
+            echo "| 06 - Trivy Container | ${TRIVY_CONTAINER_RESULT} |"
+            echo "| 07 - Staging e ZAP | ${ZAP_RESULT} |"
+            echo "| 08A - Preparar producao | ${PREPARE_RESULT} |"
+            echo "| 08B - Deploy producao | ${DEPLOY_RESULT} |"
+          } | tee reports/resumo-da-esteira.md >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Resumo gerado com sucesso."
+
+      - name: Publicar resumo como artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: resumo-da-esteira
+          path: reports/resumo-da-esteira.md
+          if-no-files-found: error
+          retention-days: 30
