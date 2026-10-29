@@ -67,7 +67,7 @@ jobs:
   semgrep:
     name: "02 - Semgrep (SAST)"
     needs: gitleaks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout do codigo
@@ -115,7 +115,7 @@ jobs:
   build:
     name: "03 - Build e Empacotamento"
     needs: semgrep
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout do codigo
@@ -202,7 +202,7 @@ jobs:
   trivy_sca:
     name: "04 - Trivy (SCA)"
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout do codigo
@@ -262,7 +262,7 @@ jobs:
   docker_ghcr:
     name: "05 - Docker e GHCR"
     needs: trivy_sca
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -391,7 +391,7 @@ jobs:
   trivy_container:
     name: "06 - Trivy Container Scan"
     needs: docker_ghcr
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -496,7 +496,7 @@ jobs:
   staging_zap:
     name: "07 - Staging e OWASP ZAP (DAST)"
     needs: trivy_container
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: homologacao
 
@@ -629,7 +629,7 @@ jobs:
     name: "08A - Preparar producao"
     needs: staging_zap
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -670,7 +670,7 @@ jobs:
   deploy_producao:
     name: "08B - Aprovacao e Deploy em Producao"
     needs: preparar_producao
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -796,7 +796,7 @@ jobs:
 
   pipeline_summary:
     name: "09 - Resumo da Esteira"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     if: always()
 
@@ -817,7 +817,7 @@ jobs:
     steps:
       - name: Baixar relatorios de seguranca
         if: always()
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: relatorio-*
           path: artifacts
