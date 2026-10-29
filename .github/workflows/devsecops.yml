@@ -679,7 +679,7 @@ jobs:
 
     environment:
       name: producao
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://critical-bait-ghcr.onrender.com
 
     steps:
       - name: Publicar site no GitHub Pages
@@ -694,6 +694,72 @@ jobs:
           echo "Deploy realizado com sucesso."
           echo "URL de producao: $PAGE_URL"
           
+      - name: Publicar imagem aprovada no Render
+        id: render_deploy
+        shell: bash
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: srv-dbhb2buc6qcc73eth760
+        run: |
+          set -euo pipefail
+          test -n "${RENDER_API_KEY:-}" || { echo "RENDER_API_KEY nao configurado no environment producao" >&2; exit 1; }
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+          API="https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys"
+          BODY="$(jq -nc --arg image "$IMAGE" '{imageUrl:$image}')"
+
+          # O imageUrl seleciona a tag do commit aprovado, nao a imagem antiga.
+          HTTP_CODE="$(curl --silent --show-error --output /tmp/render-create.json \
+            --write-out '%{http_code}' --request POST "$API" \
+            --header "Authorization: Bearer ${RENDER_API_KEY}" \
+            --header 'Content-Type: application/json' \
+            --header 'Accept: application/json' \
+            --data "$BODY")"
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "Render rejeitou a solicitacao de deploy (HTTP $HTTP_CODE)." >&2
+            jq -r '.message // .error // "Verifique as configuracoes do servico e o acesso a imagem GHCR."' /tmp/render-create.json >&2 || true
+            exit 1
+          fi
+          DEPLOY_ID="$(jq -r '.id // empty' /tmp/render-create.json)"
+          test -n "$DEPLOY_ID" || { echo 'Render nao retornou o ID do deploy' >&2; exit 1; }
+          echo "RENDER_DEPLOY_ID=$DEPLOY_ID" >> "$GITHUB_ENV"
+          echo "Deploy Render iniciado: $DEPLOY_ID"
+          echo "Imagem solicitada: $IMAGE"
+
+          # Aguarda o resultado real, nao apenas o aceite HTTP 201.
+          for attempt in $(seq 1 60); do
+            sleep 15
+            HTTP_CODE="$(curl --silent --show-error --output /tmp/render-status.json \
+              --write-out '%{http_code}' \
+              --header "Authorization: Bearer ${RENDER_API_KEY}" \
+              --header 'Accept: application/json' \
+              "$API/$DEPLOY_ID")"
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "Falha ao consultar deploy Render (HTTP $HTTP_CODE)." >&2
+              exit 1
+            fi
+            STATUS="$(jq -r '.status // "unknown"' /tmp/render-status.json)"
+            echo "Render: $STATUS (tentativa $attempt/60)"
+            case "$STATUS" in
+              live)
+                ACTUAL_REF="$(jq -r '.image.ref // empty' /tmp/render-status.json)"
+                ACTUAL_SHA="$(jq -r '.image.sha // empty' /tmp/render-status.json)"
+                if [ "$ACTUAL_REF" != "$IMAGE" ]; then
+                  echo "Referencia da imagem divergente: esperado $IMAGE; recebido $ACTUAL_REF" >&2
+                  exit 1
+                fi
+                echo "RENDER_IMAGE_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
+                echo "Render confirmou deploy LIVE da imagem aprovada."
+                exit 0
+                ;;
+              build_failed|update_failed|pre_deploy_failed|canceled|deactivated)
+                echo "Deploy Render falhou: $STATUS" >&2
+                exit 1
+                ;;
+            esac
+          done
+          echo 'Tempo limite de 15 minutos aguardando deploy Render.' >&2
+          exit 1
+
       - name: Registrar deploy em producao
         if: always()
         shell: bash
@@ -706,7 +772,11 @@ jobs:
             echo "Data UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "Commit: ${GITHUB_SHA}"
             echo "Imagem publicada no GHCR: ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
-            echo "Destino efetivo: GitHub Pages (arquivos estaticos; nao utiliza a imagem Docker)"
+            echo "Destino estatico: GitHub Pages"
+            echo "Destino Docker: Render - https://critical-bait-ghcr.onrender.com"
+            echo "Render Service ID: srv-dbhb2buc6qcc73eth760"
+            echo "Render Deploy ID: ${RENDER_DEPLOY_ID:-indisponivel}"
+            echo "Digest informado pelo Render: ${RENDER_IMAGE_SHA:-indisponivel}"
             echo "URL: ${PAGE_URL:-indisponivel}"
             echo "Execucao: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "Aprovador humano: verificar historico de aprovacoes do environment no GitHub"
