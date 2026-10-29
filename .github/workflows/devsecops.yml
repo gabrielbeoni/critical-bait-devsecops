@@ -282,12 +282,16 @@ jobs:
 
           echo "Imagem: $IMAGE"
 
-      - name: Construir imagem Docker
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir imagem Docker com Buildx
         shell: bash
         run: |
           set -euo pipefail
 
-          docker build \
+          docker buildx build \
+            --load \
             --tag "$IMAGE:${GITHUB_SHA}" \
             .
 
@@ -341,8 +345,15 @@ jobs:
 
           docker push "$IMAGE:${GITHUB_SHA}"
 
+          # Consultar o manifesto publicado no registry, nao o digest local.
+          DIGEST="$(docker buildx imagetools inspect "$IMAGE:${GITHUB_SHA}" | awk '/^Digest:/ {print $2; exit}')"
+          if [[ ! "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Falha ao obter digest remoto da imagem publicada" >&2
+            exit 1
+          fi
+          echo "GHCR_DIGEST=$DIGEST" >> "$GITHUB_ENV"
           echo "Imagem publicada: $IMAGE:${GITHUB_SHA}"
-          echo "Versao do commit: $IMAGE:${GITHUB_SHA}"
+          echo "Digest remoto GHCR: $DIGEST"
 
       - name: Registrar manifesto da imagem Docker
         if: always()
@@ -356,10 +367,13 @@ jobs:
             echo "Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "Evento: ${GITHUB_EVENT_NAME}"
             echo "Data UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-            if docker image inspect "${IMAGE}:${GITHUB_SHA}" >/dev/null 2>&1; then
-              echo "Digest local: $(docker image inspect --format '{{join .RepoDigests ", "}}' "${IMAGE}:${GITHUB_SHA}")"
+            if [ -n "${GHCR_DIGEST:-}" ]; then
+              echo "Digest remoto GHCR: ${GHCR_DIGEST}"
+              echo "Referencia imutavel: ${IMAGE}@${GHCR_DIGEST}"
+            elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+              echo "Digest remoto GHCR: N/A (pull request sem publicacao)"
             else
-              echo "Digest: imagem indisponivel no runner"
+              echo "Digest remoto GHCR: indisponivel (publicacao nao concluida)"
             fi
           } > reports/docker-build.md
 
