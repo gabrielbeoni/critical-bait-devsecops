@@ -729,7 +729,16 @@ jobs:
       contents: read
 
     steps:
-      - name: Gerar resumo da esteira
+      - name: Baixar relatorios de seguranca
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          pattern: relatorio-*
+          path: artifacts
+          merge-multiple: false
+
+      - name: Gerar resumo da esteira com achados
+        if: always()
         shell: bash
         env:
           GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
@@ -743,8 +752,30 @@ jobs:
           DEPLOY_RESULT: ${{ needs.deploy_producao.result }}
         run: |
           set -euo pipefail
-
           mkdir -p reports
+
+          # Ausencia de relatorio nao significa zero achados.
+          count_json() {
+            local file="$1" filter="$2"
+            if [[ -s "$file" ]] && jq -e . "$file" >/dev/null 2>&1; then
+              jq -r "$filter" "$file" 2>/dev/null || echo "indisponivel"
+            else
+              echo "indisponivel"
+            fi
+          }
+
+          GITLEAKS=$(count_json "artifacts/relatorio-01-gitleaks/gitleaks.json" 'if type == "array" then length else (.findings // [] | length) end')
+          SEMGREP=$(count_json "artifacts/relatorio-02-semgrep/semgrep.json" '(.results // [] | length)')
+          SCA=$(count_json "artifacts/relatorio-04-trivy-sca/trivy-fs.json" '[.Results[]? | ((.Vulnerabilities // []) + (.Misconfigurations // []) + (.Secrets // []))[] | select(.Severity == "HIGH" or .Severity == "CRITICAL")] | length')
+          IMAGE=$(count_json "artifacts/relatorio-06-trivy-image/trivy-image.json" '[.Results[]? | (.Vulnerabilities // [])[] | select(.Severity == "HIGH" or .Severity == "CRITICAL")] | length')
+
+          # OWASP ZAP Baseline: alertas agrupados por risco; nao confundir
+          # numero de tipos de alertas com numero de URLs/instancias.
+          ZAP_FILE="artifacts/relatorio-07-homologacao-zap/report_json.json"
+          ZAP_HIGH=$(count_json "$ZAP_FILE" '[.site[]?.alerts[]? | select((.riskcode | tostring) == "3")] | length')
+          ZAP_MEDIUM=$(count_json "$ZAP_FILE" '[.site[]?.alerts[]? | select((.riskcode | tostring) == "2")] | length')
+          ZAP_LOW=$(count_json "$ZAP_FILE" '[.site[]?.alerts[]? | select((.riskcode | tostring) == "1")] | length')
+          ZAP_INFO=$(count_json "$ZAP_FILE" '[.site[]?.alerts[]? | select((.riskcode | tostring) == "0")] | length')
 
           {
             echo "# Critical Bait - Resumo da Esteira"
@@ -755,20 +786,22 @@ jobs:
             echo
             echo "**Execucao:** ${GITHUB_RUN_NUMBER}"
             echo
-            echo "| Etapa | Resultado |"
-            echo "|---|---|"
-            echo "| 01 - Gitleaks | ${GITLEAKS_RESULT} |"
-            echo "| 02 - Semgrep | ${SEMGREP_RESULT} |"
-            echo "| 03 - Build | ${BUILD_RESULT} |"
-            echo "| 04 - Trivy SCA | ${TRIVY_SCA_RESULT} |"
-            echo "| 05 - Docker e GHCR | ${DOCKER_RESULT} |"
-            echo "| 06 - Trivy Container | ${TRIVY_CONTAINER_RESULT} |"
-            echo "| 07 - Staging e ZAP | ${ZAP_RESULT} |"
-            echo "| 08A - Preparar producao | ${PREPARE_RESULT} |"
-            echo "| 08B - Deploy producao | ${DEPLOY_RESULT} |"
+            echo "| Etapa | Resultado | Achados |"
+            echo "|---|---|---|"
+            echo "| 01 - Gitleaks | ${GITLEAKS_RESULT} | ${GITLEAKS} segredos |"
+            echo "| 02 - Semgrep | ${SEMGREP_RESULT} | ${SEMGREP} achados |"
+            echo "| 03 - Build | ${BUILD_RESULT} | N/A |"
+            echo "| 04 - Trivy SCA | ${TRIVY_SCA_RESULT} | ${SCA} HIGH/CRITICAL |"
+            echo "| 05 - Docker e GHCR | ${DOCKER_RESULT} | N/A |"
+            echo "| 06 - Trivy Container | ${TRIVY_CONTAINER_RESULT} | ${IMAGE} HIGH/CRITICAL |"
+            echo "| 07 - Staging e ZAP | ${ZAP_RESULT} | Alto: ${ZAP_HIGH}; Medio: ${ZAP_MEDIUM}; Baixo: ${ZAP_LOW}; Informativo: ${ZAP_INFO} |"
+            echo "| 08A - Preparar producao | ${PREPARE_RESULT} | N/A |"
+            echo "| 08B - Deploy producao | ${DEPLOY_RESULT} | N/A |"
+            echo
+            echo "*Contagens extraidas dos JSON publicados como artifacts nesta execucao."
+            echo " 'indisponivel' significa que o relatorio nao foi gerado ou nao pode ser lido."
+            echo " Para o ZAP, a contagem e de tipos de alertas, nao de instancias.*"
           } | tee reports/resumo-da-esteira.md >> "$GITHUB_STEP_SUMMARY"
-
-          echo "Resumo gerado com sucesso."
 
       - name: Publicar resumo como artifact
         if: always()
