@@ -132,6 +132,6 @@ A execução #15 também disponibilizou o artifact `resumo-da-esteira`. O print 
 - [Pipeline: etapas, bloqueios, artifacts e rastreabilidade](docs/pipeline.md)
 - [Observações técnicas, achados, limitações e lições aprendidas](docs/observacoes.md)
 - [Capturas de tela da execução](docs/evidencias/)
-- Relatório Executivo CP03: documento PDF entregue separadamente.
+- [Relatório Executivo](docs/Relatorio_Executivo_CP03_Critical_Bait.pdf).
 
 **Limitação de escopo:** a plataforma é um protótipo acadêmico. Recursos de autenticação e persistência implementados exclusivamente no navegador não equivalem a um serviço corporativo com backend e controle de acesso centralizado.
