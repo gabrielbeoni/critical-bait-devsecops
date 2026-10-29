@@ -55,7 +55,7 @@ jobs:
 
       - name: Publicar relatorio Gitleaks
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-01-gitleaks
           path: reports/gitleaks.json
@@ -103,7 +103,7 @@ jobs:
 
       - name: Publicar relatorio Semgrep
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-02-semgrep
           path: reports/semgrep.json
@@ -181,7 +181,7 @@ jobs:
 
       - name: Publicar relatorio do build
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-03-build
           path: reports/
@@ -189,7 +189,7 @@ jobs:
 
       - name: Publicar artefato do build
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artefato-aplicacao
           path: critical-bait-build-${{ github.sha }}.zip
@@ -248,7 +248,7 @@ jobs:
 
       - name: Publicar relatorio Trivy
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-04-trivy-sca
           path: |
@@ -379,7 +379,7 @@ jobs:
 
       - name: Publicar relatorio Docker
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-05-docker-build
           path: reports/docker-build.md
@@ -481,7 +481,7 @@ jobs:
 
       - name: Publicar relatorio Trivy Container
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-06-trivy-image
           path: |
@@ -608,7 +608,7 @@ jobs:
 
       - name: Publicar relatorios OWASP ZAP
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-07-homologacao-zap
           path: reports/zap/
@@ -784,7 +784,7 @@ jobs:
 
       - name: Publicar relatorio de producao
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: relatorio-08-producao
           path: reports/deploy-producao.md
@@ -891,7 +891,7 @@ jobs:
 
       - name: Publicar resumo como artifact
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: resumo-da-esteira
           path: reports/resumo-da-esteira.md
