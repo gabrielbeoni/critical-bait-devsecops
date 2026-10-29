@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <title>Critical Bait · Leroy Merlin — Treinamento de Cibersegurança</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
@@ -283,7 +283,7 @@
       </nav>
       <div class="sidebar-bottom">
           <div class="sidebar-lang-wrap">
-            <button class="sidebar-bottom-btn" id="sidebar-lang-toggle"><span class="sb-ico" id="sidebar-lang-flag">🇧🇷</span> <span id="sidebar-lang-label">Português</span> <span class="lang-arrow" style="margin-left:auto;opacity:.5">▾</span></button>
+            <button class="sidebar-bottom-btn" id="sidebar-lang-toggle"><span class="sb-ico" id="sidebar-lang-flag">🇧🇷</span> <span id="sidebar-lang-label">Português</span> <span class="lang-arrow cb-sidebar-arrow">▾</span></button>
             <div class="sidebar-lang-menu hidden" id="sidebar-lang-menu">
               <button class="lang-opt" data-lang="pt">🇧🇷 Português</button>
               <button class="lang-opt" data-lang="en">🇺🇸 English</button>
@@ -307,6 +307,7 @@
   <div id="overlay" class="overlay hidden"></div>
   <div id="modais"></div>
 
+  <script src="assets/js/csp-styles.js"></script>
   <script src="assets/js/data.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/state.js"></script>

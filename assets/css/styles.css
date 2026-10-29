@@ -2974,3 +2974,6 @@ body.light-theme .sidebar-lang-menu { background: #fff; border-color: #e2e6df; b
   .path-card { width: calc(100% - 54px) !important; }
   .path-node.training .path-card { width: calc(100% - 54px) !important; }
 }
+
+/* CSP: estilo estático do seletor de idioma */
+.cb-sidebar-arrow { margin-left: auto; opacity: .5; }

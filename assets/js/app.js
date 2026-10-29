@@ -100,7 +100,7 @@ CB.refreshChrome=function(){
   var soundBtn=document.getElementById("sound-toggle");
   if(soundBtn){soundBtn.onclick=function(){var on=CB.Sound.toggle();soundBtn.textContent=on?"🔊":"🔇";};}
   if(el)el.innerHTML='<div class="tb-userinfo"><div class="tb-username">'+CB.esc(u.name)+"</div>"+
-    '<div class="tb-xpbar"><div class="tb-xpfill" style="width:'+li.pct+'%"></div></div>'+
+    '<div class="tb-xpbar"><div class="tb-xpfill" data-cb-style="width:'+li.pct+'%"></div></div>'+
     '<div class="tb-xptext">XP: '+(u.xp||0).toLocaleString("pt-BR")+" · "+li.intoLevel+"/"+li.need+"</div></div>"+
     '<div class="level-badge"><small>NÍVEL</small><b>'+li.level+"</b></div>";
   const adm=document.getElementById("nav-admin");if(adm)adm.classList.toggle("hidden",!CB.Auth.isAdmin());
@@ -111,7 +111,7 @@ CB.refreshChrome=function(){
 CB.showLevelsModal=function(){
   const u=CB.user(),cur=CB.levelInfo(u.xp).level,MAX=20;let cum=0,rows="";
   for(let L=1;L<=MAX;L++){const isCur=L===cur,done=L<=cur;rows+='<tr class="'+(isCur?"lvl-cur":"")+'"><td><b>Nível '+L+"</b></td><td>"+CB.esc(CB.rankTitle(L))+'</td><td class="rank-xp">'+cum.toLocaleString("pt-BR")+" XP</td><td>"+(isCur?"◀ você":(done?"✔":"🔒"))+"</td></tr>";cum+=CB.xpToNext(L);}
-  const html='<div class="game-modal pop" style="width:min(480px,92vw)"><div class="game-top"><span class="gt-title">🎖️ Níveis & Patentes</span><button class="gt-close" id="lvl-close">✕</button></div><div class="game-body"><p class="section-sub">Você está no <b>Nível '+cur+'</b> · Patente <b style="color:var(--neon)">'+CB.esc(CB.rankTitle(cur))+"</b> · "+(u.xp||0).toLocaleString("pt-BR")+" XP.</p><div class=\"lvl-scroll\"><table class=\"rank-table lvl-table\"><thead><tr><th>Nível</th><th>Patente</th><th>XP necessário</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><p class=\"section-sub\" style=\"margin-top:12px\">A partir do <b>Nível "+MAX+"</b>, a patente máxima é <b style=\"color:var(--neon)\">Mestre Cyber</b>.</p></div></div>";
+  const html='<div class="game-modal pop" data-cb-style="width:min(480px,92vw)"><div class="game-top"><span class="gt-title">🎖️ Níveis & Patentes</span><button class="gt-close" id="lvl-close">✕</button></div><div class="game-body"><p class="section-sub">Você está no <b>Nível '+cur+'</b> · Patente <b data-cb-style="color:var(--neon)">'+CB.esc(CB.rankTitle(cur))+"</b> · "+(u.xp||0).toLocaleString("pt-BR")+" XP.</p><div class=\"lvl-scroll\"><table class=\"rank-table lvl-table\"><thead><tr><th>Nível</th><th>Patente</th><th>XP necessário</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><p class=\"section-sub\" data-cb-style=\"margin-top:12px\">A partir do <b>Nível "+MAX+"</b>, a patente máxima é <b data-cb-style=\"color:var(--neon)\">Mestre Cyber</b>.</p></div></div>";
   CB.openOverlay(html);
   const ov=CB.overlayEl();ov.onclick=function(e){if(e.target===ov)CB.closeOverlay();};
   document.getElementById("lvl-close").onclick=CB.closeOverlay;
@@ -139,7 +139,7 @@ CB.go=function(view){
     document.getElementById("view").innerHTML=viewFn();
   }catch(e){
     console.error("View render error:", view, e);
-    document.getElementById("view").innerHTML='<div class="panel" style="padding:30px"><h3 style="color:var(--danger)">Erro ao carregar: '+view+'</h3><p>'+CB.esc(e.message)+'</p><p style="margin-top:12px"><button class="btn-primary" id="cb-reset-reload">🔄 Resetar e recarregar</button></p></div>';
+    document.getElementById("view").innerHTML='<div class="panel" data-cb-style="padding:30px"><h3 data-cb-style="color:var(--danger)">Erro ao carregar: '+view+'</h3><p>'+CB.esc(e.message)+'</p><p data-cb-style="margin-top:12px"><button class="btn-primary" id="cb-reset-reload">🔄 Resetar e recarregar</button></p></div>';
   }
   var resetBtn=document.getElementById("cb-reset-reload");
   if(resetBtn)resetBtn.addEventListener("click",function(){
@@ -193,11 +193,11 @@ CB.viewDashboard=function(){
       var goBtn=document.getElementById("go-modulo-btn");
       if(goBtn)goBtn.onclick=function(){CB.go("modulo");};
     };
-    return '<div class="welcome-banner" style="flex-direction:column;align-items:center;text-align:center;padding:40px 20px">'+
+    return '<div class="welcome-banner" data-cb-style="flex-direction:column;align-items:center;text-align:center;padding:40px 20px">'+
       '<h2>Bem-vindo, '+CB.esc(u.name)+'!</h2>'+
-      '<p style="color:var(--text-dim);max-width:480px;margin:12px auto 8px">Antes de acessar as missões práticas do Path, você precisa completar o <b>Módulo de Treinamento</b> — são 6 temas fundamentais de segurança.</p>'+
-      '<p style="color:var(--text-mute);font-size:0.85rem;max-width:440px;margin:0 auto 24px">Depois de concluir, todas as abas serão desbloqueadas: Path, Ranking, Conquistas e mais!</p>'+
-      '<button class="btn-primary" id="go-modulo-btn" style="font-size:1.1rem;padding:16px 32px">INICIAR MÓDULO</button></div>';
+      '<p data-cb-style="color:var(--text-dim);max-width:480px;margin:12px auto 8px">Antes de acessar as missões práticas do Path, você precisa completar o <b>Módulo de Treinamento</b> — são 6 temas fundamentais de segurança.</p>'+
+      '<p data-cb-style="color:var(--text-mute);font-size:0.85rem;max-width:440px;margin:0 auto 24px">Depois de concluir, todas as abas serão desbloqueadas: Path, Ranking, Conquistas e mais!</p>'+
+      '<button class="btn-primary" id="go-modulo-btn" data-cb-style="font-size:1.1rem;padding:16px 32px">INICIAR MÓDULO</button></div>';
   }
 
   /* Dashboard normal (após módulo concluído) */
@@ -213,7 +213,7 @@ CB.viewDashboard=function(){
     var p=CB.moduleProgress(m);
     return'<div class="mission-card" data-module="'+m.id+'">'+(p.pct===100?'<span class="m-tag">✔ COMPLETO</span>':"")+
       '<div class="m-ico">'+m.icon+'</div><h4>'+CB.esc(m.title)+'</h4>'+
-      '<div class="lu-track"><div class="lu-fill" style="width:'+p.pct+'%"></div></div>'+
+      '<div class="lu-track"><div class="lu-fill" data-cb-style="width:'+p.pct+'%"></div></div>'+
       '<span class="m-xp">'+p.done+'/'+p.total+'</span></div>';
   }).join("");
 
@@ -226,7 +226,7 @@ CB.viewDashboard=function(){
   };
 
   return '<div class="welcome-banner"><div><h2>Olá, '+CB.esc(u.name)+'</h2>'+
-    '<p style="color:var(--text-dim)">'+CB.rankTitle(li.level)+' · Nível '+li.level+' · '+CB.esc(u.branch)+'</p></div></div>'+
+    '<p data-cb-style="color:var(--text-dim)">'+CB.rankTitle(li.level)+' · Nível '+li.level+' · '+CB.esc(u.branch)+'</p></div></div>'+
 
 
     '<div class="stat-row">'+
@@ -239,9 +239,9 @@ CB.viewDashboard=function(){
 
 
 
-    (certReady?'<div class="panel" style="margin:18px 0;text-align:center;padding:28px"><h3 style="color:var(--neon);margin-bottom:8px">🎓 Parabéns!</h3><p style="color:var(--text-dim);margin-bottom:16px">Todos os módulos concluídos. Seu certificado está pronto!</p><button class="btn-primary" id="get-cert">📜 VER CERTIFICADO</button></div>':"")+
+    (certReady?'<div class="panel" data-cb-style="margin:18px 0;text-align:center;padding:28px"><h3 data-cb-style="color:var(--neon);margin-bottom:8px">🎓 Parabéns!</h3><p data-cb-style="color:var(--text-dim);margin-bottom:16px">Todos os módulos concluídos. Seu certificado está pronto!</p><button class="btn-primary" id="get-cert">📜 VER CERTIFICADO</button></div>':"")+
 
-    '<div class="missions-head"><h2 class="section-title">Path de treinamento</h2><span class="section-sub" style="margin:0">Clique para treinar</span></div>'+
+    '<div class="missions-head"><h2 class="section-title">Path de treinamento</h2><span class="section-sub" data-cb-style="margin:0">Clique para treinar</span></div>'+
     '<div class="grid cols-3">'+cards+'</div>';
 };
 
@@ -310,7 +310,7 @@ CB.viewModulo=function(){
     '<div class="mv-header-text"><h2>Módulo de Treinamento</h2>'+
     '<p>Aprenda os fundamentos de segurança em 6 temas rápidos.</p></div>'+
     '<div class="mv-progress-ring">'+
-    '<div class="mv-ring" style="--pct:'+pct+'"><span class="mv-ring-val">'+doneCount+'/'+steps.length+'</span></div>'+
+    '<div class="mv-ring" data-cb-style="--pct:'+pct+'"><span class="mv-ring-val">'+doneCount+'/'+steps.length+'</span></div>'+
     '</div></div>'+
     (allDone?'<div class="mod-complete-banner">Módulo completo — o Path está desbloqueado.</div>':
       '<div class="mv-hint">Complete todos os temas para desbloquear o Path de exercícios práticos.</div>')+
@@ -338,13 +338,13 @@ CB._showModuloStep=function(idx){
     .replace(/<ul>/g,'<ul class="mv-popup-list">')
     .replace(/<p>/g,'<p class="mv-popup-p">');
 
-  var html='<div class="game-modal pop" style="width:min(500px,92vw)"><div class="game-top">'+
-    '<span class="gt-title"><span style="font-size:1.4rem;margin-right:8px">'+s.icon+'</span> '+CB.esc(s.title)+'</span>'+
+  var html='<div class="game-modal pop" data-cb-style="width:min(500px,92vw)"><div class="game-top">'+
+    '<span class="gt-title"><span data-cb-style="font-size:1.4rem;margin-right:8px">'+s.icon+'</span> '+CB.esc(s.title)+'</span>'+
     '<button class="gt-close" id="mod-close">✕</button></div>'+
-    '<div class="game-body" style="padding:20px 24px">'+
+    '<div class="game-body" data-cb-style="padding:20px 24px">'+
     '<div class="mv-popup-content">'+visualContent+'</div>'+
     (done?'<div class="mv-popup-done"><span>✅</span> Já completado!</div>'+
-      '<div style="text-align:center;margin-top:16px"><button class="btn-primary" id="mod-back">VOLTAR</button></div>'
+      '<div data-cb-style="text-align:center;margin-top:16px"><button class="btn-primary" id="mod-back">VOLTAR</button></div>'
     :'<div class="mv-popup-quiz">'+
       '<div class="mv-quiz-header">Responda para completar</div>'+
       '<p class="mv-quiz-q">'+CB.esc(s.quiz.q)+'</p>'+
@@ -377,11 +377,11 @@ CB._showModuloStep=function(idx){
           var allNow=steps.every(function(st){return u._obSteps.indexOf(st.id)!==-1;});
           if(allNow&&!u.onboardingDone){u.onboardingDone=true;CB.unlockBadge("onboarding-done");CB.addXP(200);CB.save();try{CB.Sound.play("badge");}catch(e){}CB.toast("Módulo completo","Path desbloqueado · +200 XP","");}
           fb.innerHTML='<div class="mv-fb mv-fb-ok"><h4>✔ Correto! +50 XP</h4><p>'+CB.esc(s.quiz.explain)+'</p>'+
-            '<button class="btn-primary" id="mod-next" style="margin-top:14px">'+(idx+1<steps.length&&!allNow?"PRÓXIMO TEMA →":"CONCLUIR ✓")+'</button></div>';
+            '<button class="btn-primary" id="mod-next" data-cb-style="margin-top:14px">'+(idx+1<steps.length&&!allNow?"PRÓXIMO TEMA →":"CONCLUIR ✓")+'</button></div>';
           document.getElementById("mod-next").onclick=function(){CB.closeOverlay();if(idx+1<steps.length&&!allNow){CB._showModuloStep(idx+1);}else{CB.go("modulo");}};
         }else{
           try{CB.Sound.play('wrong');}catch(e){}fb.innerHTML='<div class="mv-fb mv-fb-err"><h4>✖ Tente novamente</h4><p>'+CB.esc(s.quiz.explain)+'</p>'+
-            '<button class="btn-soft" id="mod-retry" style="margin-top:12px">TENTAR DE NOVO</button></div>';
+            '<button class="btn-soft" id="mod-retry" data-cb-style="margin-top:12px">TENTAR DE NOVO</button></div>';
           document.getElementById("mod-retry").onclick=function(){
             document.querySelectorAll(".mv-opt").forEach(function(b){b.disabled=false;b.style.opacity="1";b.classList.remove("mv-opt-correct","mv-opt-wrong");});
             fb.innerHTML="";
@@ -463,10 +463,10 @@ CB.viewPath=function(){
       '<div class="path-card-info"><h3>'+CB.esc(m.title)+'</h3>'+
       '<p>'+CB.esc(m.desc)+'</p>'+
       '<div class="path-stats"><span>'+p.done+'/'+p.total+' missões</span>'+
-      '<div class="path-bar"><div class="path-bar-fill" style="width:'+p.pct+'%"></div></div>'+
+      '<div class="path-bar"><div class="path-bar-fill" data-cb-style="width:'+p.pct+'%"></div></div>'+
       '<span>'+p.pct+'%</span></div></div>'+
       (!locked?'<span class="path-chevron '+(isOpen?"open":"")+'">▾</span>':"")+
-      (done&&!isTraining?'<button class="btn-soft btn-xs cert-mod-btn" data-certmod="'+m.id+'" title="Ver selo de conclusão" style="margin-left:8px;flex:none">📜</button>':"")+
+      (done&&!isTraining?'<button class="btn-soft btn-xs cert-mod-btn" data-certmod="'+m.id+'" title="Ver selo de conclusão" data-cb-style="margin-left:8px;flex:none">📜</button>':"")+
       '</div>'+inner+
       '</div></div>';
   }).join("");
@@ -517,8 +517,8 @@ CB.viewPath=function(){
 
   return '<div class="path-header">'+
     '<div><h2 class="section-title">Trilha de Treinamento</h2>'+
-    '<p class="section-sub">'+CB.MODULES.length+' módulos · '+totalMissions+' missões · Progresso: <b style="color:var(--neon)">'+totalPct+'%</b></p></div>'+
-    '<div class="path-overview"><div class="path-overview-bar"><div class="path-overview-fill" style="width:'+totalPct+'%"></div></div>'+
+    '<p class="section-sub">'+CB.MODULES.length+' módulos · '+totalMissions+' missões · Progresso: <b data-cb-style="color:var(--neon)">'+totalPct+'%</b></p></div>'+
+    '<div class="path-overview"><div class="path-overview-bar"><div class="path-overview-fill" data-cb-style="width:'+totalPct+'%"></div></div>'+
     '<span>'+doneMissions+'/'+totalMissions+'</span></div></div>'+
     filterHtml+
     '<div class="path-track">'+nodes+'</div>';
@@ -559,8 +559,8 @@ CB.viewRanking=function(){
       '<td><div class="rank-player"><span class="rank-avatar">'+(p.avatar||"🐟")+'</span><span class="rank-name">'+CB.esc(p.name)+(p.you?'<span class="you-tag">VOCÊ</span>':"")+"</span></div></td>"+
       '<td class="rank-xp">'+p.xp.toLocaleString("pt-BR")+" XP</td><td>Lv "+p.level+"</td></tr>";}
     const bodyM=lb.map(row3).join("");
-    table='<div class="panel"><h3 style="margin-bottom:12px">🏢 Ranking da Matriz</h3>'+
-      '<table class="rank-table"><thead><tr><th>#</th><th>Jogador</th><th>XP Total</th><th>Nível</th></tr></thead><tbody>'+(bodyM||'<tr><td colspan="4" style="text-align:center;color:var(--text-mute)">Nenhum colaborador na Matriz ainda.</td></tr>')+"</tbody></table></div>";
+    table='<div class="panel"><h3 data-cb-style="margin-bottom:12px">🏢 Ranking da Matriz</h3>'+
+      '<table class="rank-table"><thead><tr><th>#</th><th>Jogador</th><th>XP Total</th><th>Nível</th></tr></thead><tbody>'+(bodyM||'<tr><td colspan="4" data-cb-style="text-align:center;color:var(--text-mute)">Nenhum colaborador na Matriz ainda.</td></tr>')+"</tbody></table></div>";
   }else if(tab==="ind"&&isAdmin){
     
     const lb=CB.leaderboard(),top=lb.slice(0,10),inTop=top.some(function(p){return p.you;}),me=lb.find(function(p){return p.you;});
@@ -569,7 +569,7 @@ CB.viewRanking=function(){
       '<td><div class="rank-player"><span class="rank-avatar">'+(p.avatar||"🐟")+'</span><span class="rank-name">'+CB.esc(p.name)+(p.you?'<span class="you-tag">VOCÊ</span>':"")+"</span></div></td>"+
       '<td class="rank-xp">'+p.xp.toLocaleString("pt-BR")+" XP</td><td>Lv "+p.level+"</td><td>🏬 "+CB.esc(p.branch)+"</td></tr>";}
     let body=top.map(row).join("");
-    if(!inTop&&me)body+='<tr><td colspan="5" style="text-align:center;color:var(--text-mute)">· · ·</td></tr>'+row(me);
+    if(!inTop&&me)body+='<tr><td colspan="5" data-cb-style="text-align:center;color:var(--text-mute)">· · ·</td></tr>'+row(me);
     table='<div class="panel"><table class="rank-table"><thead><tr><th>#</th><th>Jogador</th><th>XP Total</th><th>Nível</th><th>Filial</th></tr></thead><tbody>'+body+"</tbody></table></div>";
   }else{
     /* COLABORADOR: ranking só da própria filial */
@@ -584,10 +584,10 @@ CB.viewRanking=function(){
     const body=lb.map(row2).join("");
     const branchInfo=CB.branchLeaderboard().find(function(b){return b.branch===myBranch;});
     const branchPos=branchInfo?branchInfo.pos:"—";
-    table='<div class="panel" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px">'+
-      '<div><h3 style="margin:0">🏬 '+CB.esc(myBranch)+'</h3>'+
-      '<span class="section-sub" style="margin:0">'+(branchInfo?branchInfo.members+" colaboradores · "+branchInfo.xp.toLocaleString("pt-BR")+" XP total":"")+'</span></div>'+
-      '<div class="rank-title" style="font-size:1.1rem">Posição entre filiais: <b style="color:var(--neon)">#'+branchPos+'</b></div></div></div>'+
+    table='<div class="panel" data-cb-style="margin-bottom:16px"><div data-cb-style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px">'+
+      '<div><h3 data-cb-style="margin:0">🏬 '+CB.esc(myBranch)+'</h3>'+
+      '<span class="section-sub" data-cb-style="margin:0">'+(branchInfo?branchInfo.members+" colaboradores · "+branchInfo.xp.toLocaleString("pt-BR")+" XP total":"")+'</span></div>'+
+      '<div class="rank-title" data-cb-style="font-size:1.1rem">Posição entre filiais: <b data-cb-style="color:var(--neon)">#'+branchPos+'</b></div></div></div>'+
       '<div class="panel"><table class="rank-table"><thead><tr><th>#</th><th>Jogador</th><th>XP Total</th><th>Nível</th></tr></thead><tbody>'+body+"</tbody></table></div>";
   }
   CB._afterView=function(){document.querySelectorAll("[data-rt]").forEach(function(b){b.onclick=function(){CB._rankTab=b.getAttribute("data-rt");CB.go("ranking");};});};
@@ -604,10 +604,10 @@ CB.viewAchievements=function(){
     "<h4>"+(i+1)+". "+CB.esc(b.name)+"</h4><p>"+CB.esc(b.desc)+"</p>"+
     (has?'<div class="b-date">✔ DESBLOQUEADA</div>':'<div class="b-locked">🔒 '+CB.esc(b.cond)+"</div>")+"</div>";}).join("");
   return'<div class="ach-head"><div><h2 class="section-title">Suas Conquistas</h2>'+
-    '<p class="section-sub" style="margin:0">'+CB.esc(u.name)+" · Patente: "+CB.rankTitle(li.level)+"</p></div>"+
-    '<div class="ach-progress-ring"><div class="ring" style="--p:'+pct+';position:relative"><div class="ring-inner">'+pct+'%</div></div>'+
-    '<div><div style="color:var(--text-dim)">Total de badges</div><div style="font-family:var(--font-display);font-size:1.6rem;color:var(--neon)">'+unlocked+" / "+total+"</div>"+
-    '<div style="color:var(--text-dim)">Nível '+li.level+" · "+(u.xp||0).toLocaleString("pt-BR")+" XP</div></div></div></div>"+
+    '<p class="section-sub" data-cb-style="margin:0">'+CB.esc(u.name)+" · Patente: "+CB.rankTitle(li.level)+"</p></div>"+
+    '<div class="ach-progress-ring"><div class="ring" data-cb-style="--p:'+pct+';position:relative"><div class="ring-inner">'+pct+'%</div></div>'+
+    '<div><div data-cb-style="color:var(--text-dim)">Total de badges</div><div data-cb-style="font-family:var(--font-display);font-size:1.6rem;color:var(--neon)">'+unlocked+" / "+total+"</div>"+
+    '<div data-cb-style="color:var(--text-dim)">Nível '+li.level+" · "+(u.xp||0).toLocaleString("pt-BR")+" XP</div></div></div></div>"+
     '<div class="badge-grid">'+grid+"</div>";
 };
 
@@ -680,10 +680,10 @@ CB.showModuleCert=function(modId){
     '<div class="cert-ribbon cert-ribbon-mod">SELO DE CONCLUSÃO</div></div>'+
     '<div class="cert-body"><div class="cert-mod-icon">'+mod.icon+'</div>'+
     '<h3 class="cert-mod-title">'+CB.esc(mod.title)+'</h3>'+
-    '<p class="cert-declare" style="margin-top:8px">Concluído por</p>'+
-    '<h2 class="cert-name" style="font-size:1.6rem">'+CB.esc(u.name)+'</h2>'+
+    '<p class="cert-declare" data-cb-style="margin-top:8px">Concluído por</p>'+
+    '<h2 class="cert-name" data-cb-style="font-size:1.6rem">'+CB.esc(u.name)+'</h2>'+
     '<p class="cert-desc">Completou todas as <b>'+mod.missions.length+' missões</b> · Dificuldade: <b>'+CB.esc(mod.difficulty||"—")+'</b></p>'+
-    '<div class="cert-sign" style="margin-top:20px"><div class="cert-col"><p>'+dt+'</p><div class="cert-line"></div><p class="cert-label">Data</p></div>'+
+    '<div class="cert-sign" data-cb-style="margin-top:20px"><div class="cert-col"><p>'+dt+'</p><div class="cert-line"></div><p class="cert-label">Data</p></div>'+
     '<div class="cert-col"><p>'+CB.esc(u.branch)+'</p><div class="cert-line"></div><p class="cert-label">Filial</p></div></div>'+
     '<p class="cert-id">ID: CB-M-'+modId.toUpperCase()+'-'+Date.now().toString(36).toUpperCase()+'</p>'+
     '</div></div></div><div class="cert-actions">'+
@@ -697,7 +697,7 @@ CB.showModuleCert=function(modId){
 CB._buildCertSection=function(u){
   if(!u)return'';
   var certs=u._certs||[];
-  if(!certs.length)return'<div class="panel" style="margin-bottom:18px"><h3 style="margin-bottom:12px">Meus Certificados</h3><p class="section-sub" style="margin:0">Complete módulos para ganhar selos de conclusão.</p></div>';
+  if(!certs.length)return'<div class="panel" data-cb-style="margin-bottom:18px"><h3 data-cb-style="margin-bottom:12px">Meus Certificados</h3><p class="section-sub" data-cb-style="margin:0">Complete módulos para ganhar selos de conclusão.</p></div>';
   var cards="";
   CB.MODULES.forEach(function(m){
     if(certs.indexOf("mod-"+m.id)!==-1){
@@ -707,7 +707,7 @@ CB._buildCertSection=function(u){
   if(certs.indexOf("final")!==-1){
     cards+='<div class="cert-card cert-card-final"><div class="cert-card-ico">🏆</div><div class="cert-card-info"><b>Guardião da Cibersegurança</b><small>Certificado completo</small></div><button class="btn-primary btn-xs" data-dlcert="final">📥 Ver</button></div>';
   }
-  return'<div class="panel" style="margin-bottom:18px"><h3 style="margin-bottom:12px">Meus Certificados <span style="color:var(--neon);font-size:0.85rem">('+certs.length+')</span></h3><div class="cert-cards">'+cards+'</div></div>';
+  return'<div class="panel" data-cb-style="margin-bottom:18px"><h3 data-cb-style="margin-bottom:12px">Meus Certificados <span data-cb-style="color:var(--neon);font-size:0.85rem">('+certs.length+')</span></h3><div class="cert-cards">'+cards+'</div></div>';
 };
 
 /* ─── PERFIL ─── */
@@ -722,7 +722,7 @@ CB.viewProfile=function(){
     const barW=ms.bestAccuracy;
     const barColor=ms.bestAccuracy>=80?"var(--neon)":ms.bestAccuracy>=60?"var(--gold)":"var(--danger)";
     return"<tr><td>"+mi.icon+" "+CB.esc(mi.title)+"</td><td>"+ms.plays+"</td><td>"+
-      '<div class="acc-bar-wrap"><div class="acc-bar" style="width:'+barW+'%;background:'+barColor+'"></div><span>'+ms.bestAccuracy+"%</span></div></td></tr>";
+      '<div class="acc-bar-wrap"><div class="acc-bar" data-cb-style="width:'+barW+'%;background:'+barColor+'"></div><span>'+ms.bestAccuracy+"%</span></div></td></tr>";
   }).join("");
 
   /* conquistas desbloqueadas para exibir no perfil */
@@ -733,13 +733,13 @@ CB.viewProfile=function(){
 
   const pinnedHtml=pinned.length?pinned.map(function(b){
     return'<div class="profile-badge-pin" data-unpin="'+b.id+'" title="Clique para remover do destaque"><span class="pb-ico">'+b.icon+'</span><span class="pb-name">'+CB.esc(b.name)+'</span></div>';
-  }).join(""):'<p style="color:var(--text-mute);font-size:0.85rem;margin:0">Nenhuma conquista em destaque ainda. Clique nas badges abaixo para destacar até 3.</p>';
+  }).join(""):'<p data-cb-style="color:var(--text-mute);font-size:0.85rem;margin:0">Nenhuma conquista em destaque ainda. Clique nas badges abaixo para destacar até 3.</p>';
 
   const earnedGrid=earnedBadges.length?earnedBadges.map(function(b){
     const isPinned=pinnedIds.indexOf(b.id)!==-1;
     return'<button class="profile-badge-item '+(isPinned?"pinned":"")+'" data-pin="'+b.id+'" title="'+(isPinned?"Remover do destaque":"Destacar no perfil")+'">'+
       '<span>'+b.icon+'</span><small>'+CB.esc(b.name)+'</small></button>';
-  }).join(""):'<p style="color:var(--text-mute);font-size:0.85rem">Complete missões para desbloquear conquistas.</p>';
+  }).join(""):'<p data-cb-style="color:var(--text-mute);font-size:0.85rem">Complete missões para desbloquear conquistas.</p>';
 
   CB._afterView=function(){
     /* certificados: botões de ver/download */
@@ -759,7 +759,7 @@ CB.viewProfile=function(){
         var grid=CB.AVATARS.map(function(a){
           return'<button class="av-pick-btn'+(a===u2.avatar?" av-current":"")+'" data-av="'+a+'">'+a+'</button>';
         }).join("");
-        var html='<div class="game-modal pop" style="width:min(380px,92vw)"><div class="game-top">'+
+        var html='<div class="game-modal pop" data-cb-style="width:min(380px,92vw)"><div class="game-top">'+
           '<span class="gt-title">Escolha seu Avatar</span>'+
           '<button class="gt-close" id="av-close">✕</button></div>'+
           '<div class="game-body"><div class="av-picker-grid-popup">'+grid+'</div></div></div>';
@@ -804,32 +804,32 @@ CB.viewProfile=function(){
     if(pLogout)pLogout.onclick=CB.exitAdminDemo;
   };
 
-  return'<div class="profile-head"><div class="profile-avatar" id="avatar-click" title="Clique para trocar o avatar" style="cursor:pointer;position:relative">'+(u.avatar||"🐟")+'<span class="av-edit-hint">✏️</span></div>'+
+  return'<div class="profile-head"><div class="profile-avatar" id="avatar-click" title="Clique para trocar o avatar" data-cb-style="cursor:pointer;position:relative">'+(u.avatar||"🐟")+'<span class="av-edit-hint">✏️</span></div>'+
     '<div class="profile-meta"><h2>'+CB.esc(u.name)+"</h2>"+
     '<div class="rank-title">'+CB.rankTitle(li.level)+" · Nível "+li.level+"</div>"+
     '<div class="dept">'+CB.esc(u.email)+" · #"+rank.rank+" no ranking</div>"+
     '<div class="profile-pinned">'+pinnedHtml+'</div>'+
     '</div></div>'+
     CB._buildCertSection(u)+
-    '<div class="panel" style="margin-bottom:18px"><h3 style="margin-bottom:12px">Conquistas em destaque <span style="color:var(--text-mute);font-size:0.8rem;font-weight:400">(clique para destacar até 3)</span></h3>'+
+    '<div class="panel" data-cb-style="margin-bottom:18px"><h3 data-cb-style="margin-bottom:12px">Conquistas em destaque <span data-cb-style="color:var(--text-mute);font-size:0.8rem;font-weight:400">(clique para destacar até 3)</span></h3>'+
     '<div class="profile-badges-grid">'+earnedGrid+'</div></div>'+
     '<div class="grid cols-2">'+
-    '<div class="panel"><h3 style="margin-bottom:14px">📊 Estatísticas</h3><div class="stat-row" style="grid-template-columns:repeat(2,1fr)">'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">📊 Estatísticas</h3><div class="stat-row" data-cb-style="grid-template-columns:repeat(2,1fr)">'+
     CB._stat((u.xp||0).toLocaleString("pt-BR"),"XP total")+CB._stat(u.badges.length+"/"+CB.BADGES.length,"Conquistas")+
     CB._stat(u.bestStreak,"Melhor sequência")+CB._stat("#"+rank.rank,"Ranking")+"</div></div>"+
-    '<div class="panel"><h3 style="margin-bottom:14px">🏢 Meus dados</h3>'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">🏢 Meus dados</h3>'+
     '<label class="field-label">Departamento</label><div class="input-wrap">'+sel("p-dept",CB.DEPARTMENTS,u.dept)+"</div>"+
     '<label class="field-label">Função</label><div class="input-wrap">'+sel("p-role",CB.ROLES,u.role)+"</div>"+
     '<label class="field-label">Filial</label><div class="input-wrap">'+sel("p-branch",CB.BRANCHES,u.branch)+"</div>"+
-    '<button class="btn-soft" id="save-info" style="margin-top:14px">💾 Salvar dados</button></div></div>'+
-    '<div class="grid cols-2" style="margin-top:18px">'+
-    '<div class="panel"><h3 style="margin-bottom:14px">🔑 Trocar senha</h3>'+
+    '<button class="btn-soft" id="save-info" data-cb-style="margin-top:14px">💾 Salvar dados</button></div></div>'+
+    '<div class="grid cols-2" data-cb-style="margin-top:18px">'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">🔑 Trocar senha</h3>'+
     '<label class="field-label">Senha atual</label><div class="input-wrap"><input id="cp-old" type="password" placeholder="••••••••"/>'+CB.eyeBtn()+"</div>"+
     '<label class="field-label">Nova senha</label><div class="input-wrap"><input id="cp-new" type="password" placeholder="mín. 8, forte"/>'+CB.eyeBtn()+"</div>"+
-    '<button class="btn-primary" id="change-pass" style="margin-top:14px">Alterar senha</button><div id="cp-msg" class="auth-msg"></div></div>'+
-    '<div class="panel"><h3 style="margin-bottom:14px">Desempenho</h3>'+
+    '<button class="btn-primary" id="change-pass" data-cb-style="margin-top:14px">Alterar senha</button><div id="cp-msg" class="auth-msg"></div></div>'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">Desempenho</h3>'+
     '<div class="perf-scroll"><table class="rank-table"><thead><tr><th>Missão</th><th>Partidas</th><th>Melhor %</th></tr></thead><tbody>'+missionStats+"</tbody></table></div></div></div>"+
-    '<div style="margin-top:18px;text-align:right"><button class="btn-soft" id="profile-logout" style="color:var(--danger)">⎋ Sair da conta</button></div>';
+    '<div data-cb-style="margin-top:18px;text-align:right"><button class="btn-soft" id="profile-logout" data-cb-style="color:var(--danger)">⎋ Sair da conta</button></div>';
 };
 
 /* ─── AUTENTICAÇÃO ─── */
@@ -876,13 +876,13 @@ CB.addAdminDemoButton = function () {
   btn.type = "button";
   btn.className = "btn-soft";
   btn.textContent = "🛡️ Acessar demonstração administrativa";
-  btn.style.cssText = "display:block;width:100%;margin-top:14px;padding:12px;cursor:pointer;border:1px solid #2bee6b";
+  CB.setStyles(btn, "display:block;width:100%;margin-top:14px;padding:12px;cursor:pointer;border:1px solid #2bee6b");
   btn.onclick = CB.enterAdminDemo;
   form.appendChild(btn);
 
   var note = document.createElement("p");
   note.textContent = "Acesso público demonstrativo. Não representa autenticação ou autorização segura.";
-  note.style.cssText = "font-size:12px;opacity:.75;margin-top:8px;text-align:center";
+  CB.setStyles(note, "font-size:12px;opacity:.75;margin-top:8px;text-align:center");
   form.appendChild(note);
 };
 
@@ -899,7 +899,7 @@ CB.showApp=function(){
     banner.id = "cb-demo-banner";
     banner.setAttribute("role", "status");
     banner.textContent = "🛡️ MODO DEMONSTRAÇÃO ADMINISTRATIVA — acesso público, dados locais, sem autenticação real.";
-    banner.style.cssText = "position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#123524;color:#fff;text-align:center;padding:10px;font-size:13px";
+    CB.setStyles(banner, "position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#123524;color:#fff;text-align:center;padding:10px;font-size:13px");
     document.body.appendChild(banner);
   }
 };
@@ -1020,8 +1020,8 @@ CB.confetti=function(){
     var size=6+Math.random()*6;
     var rotation=Math.random()*360;
     var drift=(Math.random()-0.5)*200;
-    piece.style.cssText="left:"+left+"%;width:"+size+"px;height:"+(size*0.4)+"px;background:"+color+
-      ";animation-delay:"+delay+"s;animation-duration:"+duration+"s;--drift:"+drift+"px;--rot:"+rotation+"deg";
+    CB.setStyles(piece, "left:"+left+"%;width:"+size+"px;height:"+(size*0.4)+"px;background:"+color+
+      ";animation-delay:"+delay+"s;animation-duration:"+duration+"s;--drift:"+drift+"px;--rot:"+rotation+"deg");
     container.appendChild(piece);
   }
   setTimeout(function(){container.remove();},5000);

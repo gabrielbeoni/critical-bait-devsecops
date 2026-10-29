@@ -102,14 +102,14 @@ CB.Game={
     const s=this.session;
     const pct=Math.round((s.idx/s.total)*100);
     const timerSec=this.mission.timerSec;
-    const timerHtml=timerSec?'<div class="q-timer-row"><span class="q-timer-lbl" id="q-timer-lbl">⏱ '+timerSec+'s</span><div class="q-timer-track"><div class="q-timer-bar" id="q-timer-bar" style="width:100%;background:var(--neon)"></div></div></div>':"";
+    const timerHtml=timerSec?'<div class="q-timer-row"><span class="q-timer-lbl" id="q-timer-lbl">⏱ '+timerSec+'s</span><div class="q-timer-track"><div class="q-timer-bar" id="q-timer-bar" data-cb-style="width:100%;background:var(--neon)"></div></div></div>':"";
     const infoBtn=this.mission.info?'<button class="btn-soft btn-info-mis" id="mis-info-btn" title="Ver conceito">❓ Conceito</button>':"";
     const shell='<div class="game-modal pop"><div class="game-top">'+
       '<span class="gt-title">'+CB.esc(this._title())+'</span>'+infoBtn+
       '<button class="gt-close" id="game-close" title="Sair">✕</button></div>'+
       '<div class="game-body">'+
       '<div class="game-progress"><span class="gp-label">'+(s.idx+1)+"/"+s.total+'</span>'+
-      '<div class="gp-track"><div class="gp-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="gp-track"><div class="gp-fill" data-cb-style="width:'+pct+'%"></div></div>'+
       '<span class="gp-label">✔ '+s.correct+'</span></div>'+timerHtml+
       '<div id="round-area"></div></div></div>';
     CB.openOverlay(shell);
@@ -149,8 +149,8 @@ CB.Game={
         area.querySelectorAll("[data-ans],[data-opt],[data-pw],[data-weak]").forEach(function(b){b.disabled=true;});
         const fb=document.getElementById("fb");
         if(fb){
-          fb.innerHTML='<div class="feedback bad pop"><h4>✖ Tempo esgotado!</h4><p style="color:var(--text-dim)">Atenção! Tempo de resposta encerrado.</p>'+
-            '<div style="text-align:right;margin-top:14px"><button class="btn-primary" id="next-btn">'+(self.session.idx>=self.session.total-1?"VER RESULTADO ▸":"PRÓXIMO ▸")+"</button></div></div>";
+          fb.innerHTML='<div class="feedback bad pop"><h4>✖ Tempo esgotado!</h4><p data-cb-style="color:var(--text-dim)">Atenção! Tempo de resposta encerrado.</p>'+
+            '<div data-cb-style="text-align:right;margin-top:14px"><button class="btn-primary" id="next-btn">'+(self.session.idx>=self.session.total-1?"VER RESULTADO ▸":"PRÓXIMO ▸")+"</button></div></div>";
           document.getElementById("next-btn").onclick=function(){if(self.session.idx>=self.session.total-1)self._finish();else{self.session.idx+=1;self.render();}};
         }
       }
@@ -240,11 +240,11 @@ CB.Game={
     area.innerHTML='<div class="quiz-question-box"><p class="quiz-q">Crie uma senha forte. Ela não será salva — apenas avaliada.</p></div>'+
       '<div class="pw-create-wrap">'+
       '<div class="input-wrap"><input id="pw-in" type="text" placeholder="Digite sua senha aqui" autocomplete="off" class="pw-create-input"/></div>'+
-      '<div class="pw-strength-bar"><div id="pw-bar" style="width:0%;height:100%;border-radius:99px;transition:all .3s;background:var(--danger)"></div></div>'+
+      '<div class="pw-strength-bar"><div id="pw-bar" data-cb-style="width:0%;height:100%;border-radius:99px;transition:all .3s;background:var(--danger)"></div></div>'+
       '<div id="pw-label" class="pw-strength-label">—</div>'+
       '<div id="pw-tips" class="pw-tips"></div>'+
-      '<button class="btn-primary" id="pw-submit" disabled style="margin-top:14px">✅ Confirmar senha</button>'+
-      '<p class="section-sub" style="margin-top:10px;font-size:0.8rem">Nenhum dado é enviado. Avaliação feita localmente.</p></div>'+
+      '<button class="btn-primary" id="pw-submit" disabled data-cb-style="margin-top:14px">✅ Confirmar senha</button>'+
+      '<p class="section-sub" data-cb-style="margin-top:10px;font-size:0.8rem">Nenhum dado é enviado. Avaliação feita localmente.</p></div>'+
       '<div id="fb"></div>';
 
     const inp=document.getElementById("pw-in");
@@ -289,7 +289,7 @@ CB.Game={
   _roundSocial:function(sc){
     const area=document.getElementById("round-area");
     area.innerHTML='<div class="social-card"><div class="sc-img">'+sc.img+"</div>"+
-      '<div class="quiz-question-box" style="margin:14px 0 0;border:none;padding:14px 16px">'+
+      '<div class="quiz-question-box" data-cb-style="margin:14px 0 0;border:none;padding:14px 16px">'+
       '<div class="sc-tactic"><span class="tactic-tag">'+CB.esc(sc.tactic)+"</span></div>"+
       '<p class="sc-text">'+CB.esc(sc.text)+"</p>"+
       '<p class="sc-question"><b>'+CB.esc(sc.question)+"</b></p></div>"+
@@ -342,10 +342,10 @@ CB.Game={
     const fb=document.getElementById("fb");
     const last=this.session.idx>=this.session.total-1;
     fb.innerHTML='<div class="feedback '+(correct?"good":"bad")+' pop"><h4>'+(correct?"✔ ":"✖ ")+CB.esc(info.title)+
-      ' <span style="float:right;font-size:0.8rem;color:var(--text-dim)">'+CB.esc(info.tag||"")+"</span></h4>"+
-      (info.xp?'<p style="color:var(--neon);font-weight:700">+'+info.xp+" XP</p>":"")+
+      ' <span data-cb-style="float:right;font-size:0.8rem;color:var(--text-dim)">'+CB.esc(info.tag||"")+"</span></h4>"+
+      (info.xp?'<p data-cb-style="color:var(--neon);font-weight:700">+'+info.xp+" XP</p>":"")+
       "<ul>"+info.list.map(function(c){return"<li>"+CB.esc(c)+"</li>";}).join("")+"</ul>"+
-      '<div style="text-align:right;margin-top:14px"><button class="btn-primary" id="next-btn">'+(last?"VER RESULTADO ▸":"PRÓXIMO ▸")+"</button></div></div>";
+      '<div data-cb-style="text-align:right;margin-top:14px"><button class="btn-primary" id="next-btn">'+(last?"VER RESULTADO ▸":"PRÓXIMO ▸")+"</button></div></div>";
     const self=this;
     document.getElementById("next-btn").onclick=function(){if(last)self._finish();else{self.session.idx+=1;self.render();}};
     fb.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -356,8 +356,8 @@ CB.Game={
     const sensitive=cd.items.filter(function(i){return i.sensitive;});
     this.session.total=sensitive.length;
     let spots="";
-    cd.items.forEach(function(it){spots+='<button class="cd-spot" data-id="'+it.id+'" data-sens="'+(it.sensitive?1:0)+'" title="?" style="left:'+it.x+"%;top:"+it.y+"%;width:"+it.w+"%;height:"+it.h+'%">'+it.emoji+"</button>";});
-    const shell='<div class="game-modal pop" style="width:min(720px,94vw)"><div class="game-top">'+
+    cd.items.forEach(function(it){spots+='<button class="cd-spot" data-id="'+it.id+'" data-sens="'+(it.sensitive?1:0)+'" title="?" data-cb-style="left:'+it.x+"%;top:"+it.y+"%;width:"+it.w+"%;height:"+it.h+'%">'+it.emoji+"</button>";});
+    const shell='<div class="game-modal pop" data-cb-style="width:min(720px,94vw)"><div class="game-top">'+
       '<span class="gt-title">🧹  Missão Mesa Limpa</span>'+
       (this.mission.info?'<button class="btn-soft btn-info-mis" id="mis-info-btn">❓ Conceito</button>':"")+'<button class="gt-close" id="game-close">✕</button></div>'+
       '<div class="game-body"><p class="section-sub">'+CB.esc(cd.intro)+"</p>"+
@@ -385,7 +385,7 @@ CB.Game={
           btn.classList.add("done");found[id]=true;
           try{CB.Sound.play("correct");}catch(e){}self.session.correct=Object.keys(found).length;self.session.xp+=self.missionXP();
           counter.textContent="Encontrados: "+self.session.correct+"/"+self.session.total;
-          addLog(true,"<b>"+CB.esc(it.label)+"</b> — "+CB.esc(it.explain)+' <span style="color:var(--neon)">+'+self.missionXP()+" XP</span>");
+          addLog(true,"<b>"+CB.esc(it.label)+"</b> — "+CB.esc(it.explain)+' <span data-cb-style="color:var(--neon)">+'+self.missionXP()+" XP</span>");
           CB.afterAnswer(true,{});
           if(self.session.correct>=self.session.total)document.getElementById("cd-finish").classList.add("pulse");
         }else{try{CB.Sound.play("wrong");}catch(e){}
@@ -415,14 +415,14 @@ CB.Game={
     if(xpResult.leveledUp)CB.toast("SUBIU DE NÍVEL!","Nível "+xpResult.newLevel+" · "+CB.rankTitle(xpResult.newLevel),"🆙");
     if(daily&&!daily.already)CB.toast("Desafio diário!","Streak "+daily.streak+" dia(s) · +"+daily.coins+" 🪙","🔥");
     const li=CB.levelInfo(CB.user().xp);
-    const badgesHtml=uniqueNew.length?'<p style="margin-top:12px;color:var(--text-dim)">Novas conquistas: '+uniqueNew.map(function(b){return b.icon+" "+CB.esc(b.name);}).join(" · ")+"</p>":"";
+    const badgesHtml=uniqueNew.length?'<p data-cb-style="margin-top:12px;color:var(--text-dim)">Novas conquistas: '+uniqueNew.map(function(b){return b.icon+" "+CB.esc(b.name);}).join(" · ")+"</p>":"";
     const statusTxt=ok?"MISSÃO CONCLUÍDA ✔":CB.t?CB.t("result_fail"):"MISSÃO ENCERRADA";
     const html='<div class="game-modal pop"><div class="game-body result-card">'+
       '<div class="r-status '+(ok?"":"fail")+'">'+statusTxt+"</div>"+
       '<div class="r-xp">+'+totalXP+" XP · +"+coins+" 🪙</div>"+
       '<div class="r-summary">Você acertou <b>'+s.correct+" de "+s.total+"</b> ("+accuracy+"%)."+
       (s.wrongClicks?" Cliques indevidos: "+s.wrongClicks+".":"")+
-      (perfect?' <b style="color:var(--neon)">Pontuação perfeita!</b>':"")+
+      (perfect?' <b data-cb-style="color:var(--neon)">Pontuação perfeita!</b>':"")+
       (perfectBonus?" Bônus: +"+perfectBonus+" XP.":"")+
       (daily&&!daily.already?" 🔥 Desafio diário: streak "+daily.streak+" · +"+daily.bonusXP+" XP.":"")+
       badgesHtml+"</div>"+
@@ -437,9 +437,9 @@ CB.Game={
               '<div><b>'+CB.esc(r.tag||r.q)+'</b><p>'+CB.esc(r.explain)+'</p></div></div>';
           }).join("")+'</div>';
       })()+
-      '<div class="result-level"><div style="color:var(--text-dim)">Progresso para o próximo nível</div>'+
-      '<div class="lu-top" style="max-width:520px;margin:6px auto 0;display:flex;justify-content:space-between"><span>NÍVEL '+li.level+"</span><span>"+li.intoLevel+" / "+li.need+" XP</span></div>"+
-      '<div class="rl-track"><div class="rl-fill" style="width:'+li.pct+'%"></div></div></div>'+
+      '<div class="result-level"><div data-cb-style="color:var(--text-dim)">Progresso para o próximo nível</div>'+
+      '<div class="lu-top" data-cb-style="max-width:520px;margin:6px auto 0;display:flex;justify-content:space-between"><span>NÍVEL '+li.level+"</span><span>"+li.intoLevel+" / "+li.need+" XP</span></div>"+
+      '<div class="rl-track"><div class="rl-fill" data-cb-style="width:'+li.pct+'%"></div></div></div>'+
       '<div class="result-actions"><button class="btn-primary" id="r-next">PRÓXIMA MISSÃO</button>'+
       '<button class="btn-ghost" id="r-replay">REVER MISSÃO</button>'+
       '<button class="btn-soft" id="r-home">VOLTAR AO PAINEL</button></div></div></div>';
@@ -473,7 +473,7 @@ CB.Game._rebindAfterInfo=function(){
 CB._showMissionInfo=function(html){
   var wasHidden=CB.overlayEl().classList.contains("hidden");
   var prev=wasHidden?null:CB.overlayEl().innerHTML;
-  var modal='<div class="game-modal pop" style="width:min(480px,92vw)"><div class="game-top">'+
+  var modal='<div class="game-modal pop" data-cb-style="width:min(480px,92vw)"><div class="game-top">'+
     '<span class="gt-title">Conceito da Missão</span>'+
     '<button class="gt-close" id="info-close">✕</button></div>'+
     '<div class="game-body info-content">'+html+"</div></div>";

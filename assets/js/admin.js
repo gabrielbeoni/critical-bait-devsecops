@@ -54,7 +54,7 @@ CB._adminOverview=function(){
   const branchBars=branches.map(function(b){
     const pct=Math.round((b.xp/maxBXP)*100);
     return'<div class="chart-row"><span class="chart-label">'+CB.esc(b.branch.split(" - ")[0])+'</span>'+
-      '<div class="chart-bar-track"><div class="chart-bar-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="chart-bar-track"><div class="chart-bar-fill" data-cb-style="width:'+pct+'%"></div></div>'+
       '<span class="chart-val">'+b.xp.toLocaleString("pt-BR")+'</span></div>';
   }).join("");
 
@@ -74,7 +74,7 @@ CB._adminOverview=function(){
   const modBars=modPerf.map(function(m){
     const color=m.avg>=80?"var(--neon)":m.avg>=60?"var(--gold)":"var(--danger)";
     return'<div class="chart-row"><span class="chart-label">'+m.icon+" "+CB.esc(m.title)+'</span>'+
-      '<div class="chart-bar-track"><div class="chart-bar-fill" style="width:'+m.avg+'%;background:'+color+'"></div></div>'+
+      '<div class="chart-bar-track"><div class="chart-bar-fill" data-cb-style="width:'+m.avg+'%;background:'+color+'"></div></div>'+
       '<span class="chart-val">'+m.avg+'%</span></div>';
   }).join("");
 
@@ -86,7 +86,7 @@ CB._adminOverview=function(){
   for(var lv=1;lv<=maxLvl;lv++){
     var cnt=lvlDist[lv]||0;
     var h=cnt?Math.max(8,Math.round((cnt/maxCount)*100)):0;
-    lvlBars+='<div class="vchart-col"><div class="vchart-bar" style="height:'+h+'%"'+(cnt?' title="'+cnt+' pessoa(s)"':"")+"></div>"+
+    lvlBars+='<div class="vchart-col"><div class="vchart-bar" data-cb-style="height:'+h+'%"'+(cnt?' title="'+cnt+' pessoa(s)"':"")+"></div>"+
       '<span class="vchart-lbl">'+lv+"</span></div>";
   }
 
@@ -97,23 +97,23 @@ CB._adminOverview=function(){
 
   /* ── Missões com menor desempenho ── */
   const weak=CB.weakPoints().slice(0,3);
-  const weakHtml=weak.length?'<div class="panel" style="margin-top:16px"><h3 style="margin-bottom:10px">Pontos fracos da equipe</h3><table class="rank-table"><thead><tr><th>Missão</th><th>Módulo</th><th>Acerto médio</th><th>Respostas</th></tr></thead><tbody>'+
+  const weakHtml=weak.length?'<div class="panel" data-cb-style="margin-top:16px"><h3 data-cb-style="margin-bottom:10px">Pontos fracos da equipe</h3><table class="rank-table"><thead><tr><th>Missão</th><th>Módulo</th><th>Acerto médio</th><th>Respostas</th></tr></thead><tbody>'+
     weak.map(function(w){return"<tr><td>"+w.icon+" "+CB.esc(w.title)+"</td><td>"+CB.esc(w.module)+"</td>"+
-      '<td><div class="acc-bar-wrap"><div class="acc-bar" style="width:'+w.avg+'%;background:var(--danger)"></div><span>'+w.avg+'%</span></div></td>'+
+      '<td><div class="acc-bar-wrap"><div class="acc-bar" data-cb-style="width:'+w.avg+'%;background:var(--danger)"></div><span>'+w.avg+'%</span></div></td>'+
       "<td>"+w.n+"</td></tr>";}).join("")+"</tbody></table></div>":"";
 
-  return'<div class="stat-row" style="grid-template-columns:repeat(4,1fr)">'+
+  return'<div class="stat-row" data-cb-style="grid-template-columns:repeat(4,1fr)">'+
     CB._stat(totalUsers,"Colaboradores")+CB._stat(completed,"Missões concluídas")+CB._stat(avg,"Nível médio")+CB._stat(CB.DB.players().reduce(function(a,u){return a+Object.keys(u.missions||{}).filter(function(k){return u.missions[k].completed;}).length;},0),"Total missões")+"</div>"+
-    '<div class="grid cols-2" style="margin-top:16px">'+
-    '<div class="panel"><h3 style="margin-bottom:14px">XP por Filial</h3><div class="chart-rows">'+branchBars+'</div></div>'+
-    '<div class="panel"><h3 style="margin-bottom:14px">Desempenho por Módulo</h3><div class="chart-rows">'+modBars+'</div></div></div>'+
-    '<div class="grid cols-2" style="margin-top:16px">'+
-    '<div class="panel"><h3 style="margin-bottom:14px">Distribuição de Níveis</h3><div class="vchart">'+lvlBars+'</div><p class="section-sub" style="margin:8px 0 0;text-align:center">Nível dos colaboradores (1–20)</p></div>'+
-    '<div class="panel" style="text-align:center"><h3 style="margin-bottom:14px">Taxa de Conclusão Geral</h3>'+
-    '<div class="donut-wrap"><div class="donut" style="--pct:'+completionRate+'"><span class="donut-val">'+completionRate+'%</span></div></div>'+
-    '<p class="section-sub" style="margin:12px 0 0">'+completed+' de '+totalPossible+' missões completadas</p></div></div>'+
+    '<div class="grid cols-2" data-cb-style="margin-top:16px">'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">XP por Filial</h3><div class="chart-rows">'+branchBars+'</div></div>'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">Desempenho por Módulo</h3><div class="chart-rows">'+modBars+'</div></div></div>'+
+    '<div class="grid cols-2" data-cb-style="margin-top:16px">'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:14px">Distribuição de Níveis</h3><div class="vchart">'+lvlBars+'</div><p class="section-sub" data-cb-style="margin:8px 0 0;text-align:center">Nível dos colaboradores (1–20)</p></div>'+
+    '<div class="panel" data-cb-style="text-align:center"><h3 data-cb-style="margin-bottom:14px">Taxa de Conclusão Geral</h3>'+
+    '<div class="donut-wrap"><div class="donut" data-cb-style="--pct:'+completionRate+'"><span class="donut-val">'+completionRate+'%</span></div></div>'+
+    '<p class="section-sub" data-cb-style="margin:12px 0 0">'+completed+' de '+totalPossible+' missões completadas</p></div></div>'+
     weakHtml+
-    '<div style="margin-top:20px;text-align:center"><button class="btn-primary" id="export-pdf">EXPORTAR RELATÓRIO PDF</button></div>';
+    '<div data-cb-style="margin-top:20px;text-align:center"><button class="btn-primary" id="export-pdf">EXPORTAR RELATÓRIO PDF</button></div>';
 };
 
 /* ─── EXPORTAR RELATÓRIO PDF ─── */
@@ -231,7 +231,7 @@ CB._adminUsers=function(){
     "<td>Lv "+CB.levelInfo(u.xp).level+"</td>"+
     '<td class="rank-xp">'+u.xp.toLocaleString("pt-BR")+"</td>"+
     '<td><span class="role-badge '+(isAdm?"role-admin":"role-member")+'">'+(isAdm?"Admin":"Membro")+"</span></td>"+
-    "<td style='white-space:nowrap'>"+
+    "<td data-cb-style='white-space:nowrap'>"+
     '<button class="btn-soft btn-xs" data-toggle-admin="'+CB.esc(u.email)+'">'+(isAdm?"→ Membro":"→ Admin")+"</button> "+
     '<button class="btn-soft btn-xs" data-reset="'+CB.esc(u.email)+'">zerar</button> '+
     '<button class="btn-soft btn-xs btn-danger" data-remove="'+CB.esc(u.email)+'">remover</button>'+
@@ -261,11 +261,11 @@ CB._adminMissions=function(){
   var rows=missionStats.map(function(m){
     var color=m.avg>=80?"var(--neon)":m.avg>=60?"var(--gold)":"var(--danger)";
     return"<tr><td>"+m.icon+" "+CB.esc(m.title)+"</td><td>"+CB.esc(m.module)+"</td><td>"+CB.esc(m.difficulty)+"</td>"+
-      '<td><div class="acc-bar-wrap"><div class="acc-bar" style="width:'+m.avg+'%;background:'+color+'"></div><span>'+m.avg+'%</span></div></td>'+
+      '<td><div class="acc-bar-wrap"><div class="acc-bar" data-cb-style="width:'+m.avg+'%;background:'+color+'"></div><span>'+m.avg+'%</span></div></td>'+
       "<td>"+m.completions+"</td><td>"+m.players+"</td></tr>";
   }).join("");
 
-  return'<div class="panel"><h3 style="margin-bottom:14px">Desempenho por Missão</h3>'+
+  return'<div class="panel"><h3 data-cb-style="margin-bottom:14px">Desempenho por Missão</h3>'+
     '<div class="adm-table-scroll"><table class="rank-table"><thead><tr><th>Missão</th><th>Módulo</th><th>Dificuldade</th><th>Acerto médio</th><th>Conclusões</th><th>Jogadores</th></tr></thead><tbody>'+rows+"</tbody></table></div></div>";
 };
 
@@ -283,17 +283,17 @@ CB._adminContent=function(){
       customCount++;
       customRows+="<tr><td><span class='chip-seed'>"+CB.esc(quizKey)+"</span></td>"+
         "<td>"+CB.esc(q.q)+"</td>"+
-        "<td>"+q.options.map(function(o,i){return(i===q.correct?"<b style='color:var(--neon)'>✔ ":"")+ CB.esc(o)+(i===q.correct?"</b>":"");}).join("<br>")+"</td>"+
+        "<td>"+q.options.map(function(o,i){return(i===q.correct?"<b data-cb-style='color:var(--neon)'>✔ ":"")+ CB.esc(o)+(i===q.correct?"</b>":"");}).join("<br>")+"</td>"+
         "<td><button class='btn-soft btn-xs btn-danger' data-delq='"+CB.esc(quizKey)+"' data-delqi='"+idx+"'>🗑️ remover</button></td></tr>";
     });
   });
   var customHtml=customCount>0
-    ? '<div class="panel" style="margin-top:18px"><h3 style="margin-bottom:12px">Perguntas criadas pelo admin ('+customCount+')</h3>'+
+    ? '<div class="panel" data-cb-style="margin-top:18px"><h3 data-cb-style="margin-bottom:12px">Perguntas criadas pelo admin ('+customCount+')</h3>'+
       '<table class="rank-table"><thead><tr><th>Quiz</th><th>Pergunta</th><th>Opções</th><th>Ação</th></tr></thead><tbody>'+customRows+'</tbody></table></div>'
-    : '<div class="panel" style="margin-top:18px"><h3 style="margin-bottom:12px">Perguntas criadas pelo admin</h3><p class="section-sub" style="margin:0">Nenhuma pergunta customizada ainda. Use o formulário acima para adicionar.</p></div>';
+    : '<div class="panel" data-cb-style="margin-top:18px"><h3 data-cb-style="margin-bottom:12px">Perguntas criadas pelo admin</h3><p class="section-sub" data-cb-style="margin:0">Nenhuma pergunta customizada ainda. Use o formulário acima para adicionar.</p></div>';
 
   return'<div class="grid cols-2">'+
-    '<div class="panel"><h3 style="margin-bottom:12px">Nova pergunta de quiz</h3>'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:12px">Nova pergunta de quiz</h3>'+
     '<label class="field-label">Quiz</label><div class="input-wrap"><select id="nq-quiz">'+quizOpts+"</select></div>"+
     '<label class="field-label">Pergunta</label><div class="input-wrap"><input id="nq-q" placeholder="Texto da pergunta"/></div>'+
     '<label class="field-label">Opção 1</label><div class="input-wrap"><input id="nq-o1"/></div>'+
@@ -301,10 +301,10 @@ CB._adminContent=function(){
     '<label class="field-label">Opção 3</label><div class="input-wrap"><input id="nq-o3"/></div>'+
     '<label class="field-label">Opção correta</label><div class="input-wrap"><select id="nq-correct"><option value="0">Opção 1</option><option value="1">Opção 2</option><option value="2">Opção 3</option></select></div>'+
     '<label class="field-label">Explicação</label><div class="input-wrap"><input id="nq-exp" placeholder="Por que essa é a resposta"/></div>'+
-    '<button class="btn-primary" id="nq-add" style="margin-top:14px">Adicionar pergunta</button><div id="nq-msg" class="auth-msg"></div></div>'+
-    '<div class="panel"><h3 style="margin-bottom:12px">Conteúdo atual</h3>'+
-    '<p class="section-sub" style="margin:0 0 8px">Quizzes:</p><ul class="adm-list">'+quizCounts+"</ul>"+
-    '<p class="section-sub" style="margin:14px 0 8px">Módulos & missões:</p><ul class="adm-list">'+modList+"</ul></div></div>"+
+    '<button class="btn-primary" id="nq-add" data-cb-style="margin-top:14px">Adicionar pergunta</button><div id="nq-msg" class="auth-msg"></div></div>'+
+    '<div class="panel"><h3 data-cb-style="margin-bottom:12px">Conteúdo atual</h3>'+
+    '<p class="section-sub" data-cb-style="margin:0 0 8px">Quizzes:</p><ul class="adm-list">'+quizCounts+"</ul>"+
+    '<p class="section-sub" data-cb-style="margin:14px 0 8px">Módulos & missões:</p><ul class="adm-list">'+modList+"</ul></div></div>"+
     customHtml;
 };
 
